@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="fr">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>ALOM - Spring</title>
+
+		<meta name="description" content="ALOM - Spring">
+		<meta name="author" content="Julien WITTOUCK <julien@codeka.io>">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="../css/reveal.css">
+		<link rel="stylesheet" href="../css/theme/white.css" id="theme">
+
+		<link rel="stylesheet" href="../css/miage-lille.css"/>
+
+        <link href="https://afeld.github.io/emoji-css/emoji.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+				<section>
+					<h1>ALOM</h1>
+                    <img src="images/spring-by-pivotal.png" style="width: 50%;"/>
+				</section>
+
+                <section>
+					<h2><i class="fab fa-uber"></i> UBER</h2>
+                    <img src="images/Microservice-Architecture-Of-UBER.png" style="width: 50%"/>
+                </section>
+
+                <section>
+                    <h2>Un micro-service c'est :</h2>
+                    <ul>
+                        <li>
+                            Un ou plusieurs canaux de communication
+                            <ul>
+                                <li>HTTP - REST/JSON</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Un ensemble de fonctionnalités du même domaine métier
+                        </li>
+                        <li>
+                            Une source de données dédiée
+                        </li>
+                    </ul>
+                    <img src="images/micro-service-poke.png"/>
+                </section>
+
+                <section>
+                    <h2><i class="em em-mag"></i> un micro-service Java</h2>
+                    <p>On s'appuie sur les technologies connues: les servlets !</p>
+                    <img src="images/architecture.svg"/>
+                </section>
+
+				<section>
+					<h2>What is Spring?</h2>
+					<img src="images/fry.png"/>
+				</section>
+
+				<section>
+					<img src="images/spring-by-pivotal.png" style="width: 50%;">
+                    <ul>
+                        <li>Framework pour le développement d'applications</li>
+                        <li>Développé par la société Pivotal</li>
+                        <li>open-source (licence apache) <a href="https://github.com/spring-projects"><i class="fab fa-github"></i></a></li>
+                    </ul>
+                </section>
+                <section>
+                    <img src="images/spring-by-pivotal.png" style="width: 30%;">
+                    <p>Décomposé en projets</p>
+                    <ul>
+                        <li>spring-framework : dependency injection, transactions, web, mvc...</li>
+                        <li>spring-boot : accélérateur de développement</li>
+						<li>spring-cloud : patterns et connecteurs pour produits orientés micro-services</li>
+						<li>spring-security : gestion de l'authentification, protection contre les attaques</li>
+                    </ul>
+				</section>
+
+				<section class="stack">
+					<section>
+						<h2><i class="em em-syringe"></i> Dependency injection</h2>
+					</section>
+
+					<section>
+						<h3><i class="em em-blue_car"></i> un morceau d'UBER</h3>
+						<img src="images/passenger.png"/>
+					</section>
+
+					<section>
+						<h3><i class="em em-building_construction"></i> La vision architecture</h3>
+						<img src="images/passenger-archi.png"/>
+					</section>
+
+					<section>
+						<h3><i class="em em-thinking_face"></i> Le code du PassengerService</h3>
+						<img src="carbon/passengerService.png" style="width: 70%;"/>
+						<p class="fragment"><i class="em em-question"></i> Quel est le problème de ce code?</p>
+					</section>
+					<section>
+						<h3><i class="em em-male-police-officer"></i> S.O.L.I.D principles</h3>
+						<ul>
+							<li>S : Single Responsability</li>
+							<span class="fragment">Une classe doit avoir une seule responsabilité</span>
+							<li>O : Open/Closed</li>
+							<span class="fragment">Ouvert à l'extension, mais fermé à la modification</span>
+							<li>L : Liskov Substitution</li>
+							<span class="fragment">Pouvoir utiliser un sous-type</span>
+							<li>I : Interface Segregation</li>
+							<span class="fragment">Présenter plusieurs interfaces spécifiques</span>
+							<li>D : Dependency Inversion</li>
+							<span class="fragment">Dépendre d'abstractions, et non d'implémentations</span>
+						</ul>
+					</section>
+					<section>
+						<h3><i class="em em-male-police-officer"></i>Is it S.O.L.I.D ?</h3>
+						<div>
+							<img src="carbon/passengerService.png" style="width: 70%; float: left"/>
+							<table>
+								<tbody>
+								<tr><td>S</td><td><i class="em em-x fragment"></i></td></tr>
+								<tr><td>O</td><td><i class="em em-x fragment"></i></td></tr>
+								<tr><td>L</td><td><i class="em em-x fragment"></i></td></tr>
+								<tr><td>I</td><td><i class="em em-x fragment"></i></td></tr>
+								<tr><td>D</td><td><i class="em em-x fragment"></i></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</section>
+					<section>
+						<h2><i class="em em-ambulance"></i> Refactoring !</h2>
+						<div>
+							<img src="carbon/passengerServiceRefacto.png" style="width: 60%; float: left;"/>
+							<table>
+								<tbody>
+									<tr><td>S</td><td><i class="em em-white_check_mark fragment"></i></td></tr>
+									<tr><td>O</td><td><i class="em em-white_check_mark fragment"></i></td></tr>
+									<tr><td>L</td><td><i class="em em-white_check_mark fragment"></i></td></tr>
+									<tr><td>I</td><td><i class="em em-white_check_mark fragment"></i></td></tr>
+									<tr><td>D</td><td><i class="em em-white_check_mark fragment"></i></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</section>
+					<section>
+						<h2><i class="em em-information_source"></i></h2>
+						<p>Rendre notre code S.O.L.I.D :</p>
+						<ul>
+							<li class="fragment">Le rend testable</li>
+							<li class="fragment">Le rend compatible avec de l'injection de dépendances</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Injection de dépendance</h2>
+						<p>Laisser la plateforme fournir les dépendances:</p>
+						<ul>
+							<li>En fonction du contexte</li>
+							<li>En fonction des composants disponibles</li>
+						</ul>
+						<p>Nécessite des efforts de conception objet!</p>
+					</section>
+				</section>
+
+				<section class="stack">
+					<section>
+						<h2><i class="em em-syringe"></i> Injection de dépendances avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"></h2>
+					</section>
+					<section>
+						<h4><i class="em em-syringe"></i> Injection de dépendances avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"></h4>
+						<p>spring-core : découpage de l'application en "beans" = composants</p>
+						<p>Fournit un mécanisme d'injection de dépendance</p>
+						<ul>
+							<li>Inversion de contrôle (gestion du cycle de vie des beans)</li>
+							<li>Injection de dépendances</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Application context</h2>
+						<img src="images/application_context.png"/>
+					</section>
+
+					<section>
+						<h2>Bean <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;">  </h2>
+						<ul>
+							<li>id : nom unique du bean</li>
+							<li>class : classe Java d’implémentation du bean</li>
+							<li>scope :
+								<ul>
+									<li>singleton : une seule instance du bean</li>
+									<li>prototype : une nouvelle instance à chaque demande</li>
+								</ul>
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Application Context</h2>
+						<h4>Configuration XML (Spring 2 - ~2006)</h4>
+						<div>
+							<div style="float: left; width: 50%;">
+								<p>Développement des beans</p>
+								<img src="carbon/SystemOutMessageService.png"/>
+							</div>
+							<div style="float: right; width: 50%;">
+								<p>Configuration des beans</p>
+								<img src="carbon/SystemOutMessageServiceXML.png"/>
+							</div>
+						</div>
+					</section>
+
+					<section>
+						<h2>Application Context</h2>
+						<h4>Configuration Java (Spring 3+  >2009)</h4>
+						<p>Développement des beans et utilisation d'annotations</p>
+						<img src="carbon/SystemOutMessageServiceAnnot.png" style="width: 70%;"/>
+					</section>
+
+					<section>
+						<h2>Application Context</h2>
+						<p>Déclaration des beans par annotations</p>
+						<ul>
+							<li>@Component : bean simple</li>
+							<li>@Service : bean de stéréotype service</li>
+							<li>@Repository : bean de stéréotype DAO</li>
+							<li>@Controller : bean controller (spring web)</li>
+							<li>@Scope(”singleton”) : déclaration du scope du bean</li>
+							<li>@Autowired : injection de dépendance</li>
+						</ul>
+					</section>
+
+					<section>
+						<h4><i class="em em-syringe"></i> Injection de dépendances avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"></h4>
+						<div>
+							<img src="carbon/passengerServiceSpring1.png" style="width: 50%; float:left;"/>
+							<img src="carbon/passengerServiceSpring2.png" style="width: 50%; float:right;"/>
+						</div>
+					</section>
+
+					<section>
+						<h4><i class="em em-syringe"></i> Injection de dépendances avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"></h4>
+						<div>
+							<img src="carbon/passengerServiceSpring1.png" style="width: 50%; float:left;"/>
+							<img src="carbon/passengerServiceSpring3.png" style="width: 50%; float:right;"/>
+						</div>
+					</section>
+
+					<section>
+						<h4><i class="em em-syringe"></i> Injection de dépendances avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"></h4>
+						<div>
+							<img src="carbon/passengerServiceSpring1.png" style="width: 50%; float:left;"/>
+							<img src="carbon/passengerServiceSpring4.png" style="width: 50%; float:right;"/>
+						</div>
+					</section>
+
+				</section>
+
+				<section>
+					<h2>TP</h2>
+					<img src="../images/leonidas.png"/>
+					<p>
+						<a href="03-tp-spring.html">Jouer avec l'injection de dépendances !</a>
+					</p>
+				</section>
+
+				<section style="text-align:left;">
+					<h1>Fin du cours</h1>
+					<p>Cours suivant : <br/>
+						<a href="../04-jpa/04-jpa.html">Persistance des données avec JPA</a>
+					</p>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="../js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+                // controlsLayout: 'edges',
+                controlsBackArrows: 'faded',
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide' // none/fade/slide/convex/concave/zoom
+			});
+
+		</script>
+
+		<aside class="miage_aside_logo"></aside>
+
+    </body>
+</html>

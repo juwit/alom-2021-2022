@@ -1,0 +1,1089 @@
+:source-highlighter: pygments
+:prewrap!:
+
+:icons: font
+
+:toc: left
+:toclevels: 4
+
+:linkattrs:
+
+:sectlinks:
+:sectanchors:
+:sectnums:
+
+:experimental:
+
+= ALOM - TP 3 - Spring
+
+== Présentation et objectifs
+
+image::images/architecture.svg[inline]
+
+Le but est de continuer le développement de notre architecture "à la microservice".
+
+Pour rappel, dans cette architecture, chaque composant a son rôle précis :
+
+* la servlet reçoit les requêtes HTTP, et les envoie au bon controller (rôle de point d'entrée de l'application)
+* le controlleur implémente une méthode Java par route HTTP, récupère les paramètres, et appelle le service (rôle de routage)
+* le service implémente le métier de notre micro-service
+* le repository représente les accès aux données (avec potentiellement une base de données)
+
+Et pour s'amuser un peu, nous allons réaliser un micro-service qui nous renvoie des données sur les Pokemons !
+
+image::images/micro-service-poke.png[]
+
+[NOTE]
+====
+On retrouve en général le même découpage dans les micro-services NodeJS avec express:
+
+* La déclaration de l'application (express)
+* La déclaration des routeurs (express.Router)
+* L'implémentation du code métier et les accès à une base de données
+====
+
+Nous allons développer :
+
+1. un repository d'accès aux données de Pokemons (à partir d'un fichier JSON)
+2. un service d'accès aux données
+3. annoter ces composants avec les annotations de Spring et les tester
+4. créer un controlleur spring pour gérer nos requêtes HTTP / REST
+5. utiliser spring-boot pour instancier notre application !
+
+[TIP]
+====
+Nous repartons de zéro pour ce TP !
+Nous allons réécrire le TP "Handcrafting" en utilisant Spring !
+====
+
+== Github
+
+Identifiez vous sur Github, et cliquez sur le lien suivant pour créer votre repository git: https://classroom.github.com/a/muEZu82F[Github classroom,window="_blank"]
+
+Clonez ensuite votre repository git sur votre poste !
+
+== Création de l'arborescence projet
+
+Allez dans votre repository fraîchement clonné.
+
+Créez les répertoires de sources java et de test, et de ressources.
+
+[source,bash]
+----
+$ cd pokemon-type-api
+$ mkdir -p src/{main,test}/{java,resources}
+----
+
+L'arborescence résultante doit être la suivante :
+
+.L'arborescence de mon projet
+image::images/arbo.png[]
+
+=== Le pom.xml
+
+Initialiser un fichier pom.xml à la racine du projet
+
+[source,xml,linenums]
+----
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.miage.alom.tp</groupId>
+    <artifactId>pokemon-type-api</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging> <!--1-->
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source> <!--2-->
+        <maven.compiler.target>11</maven.compiler.target> <!--3-->
+    </properties>
+
+    <dependencies>
+
+        <!-- testing --> <!--4-->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.3.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.3.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.23.4</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build> <!--5-->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.22.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
+----
+<1> On va fabriquer un jar cette fois ci!
+<2> On indique à maven quelle version de Java utiliser pour les sources !
+<3> On indique à maven quelle version de Java on cible !
+<4> On positionne tout de suite nos dépendances de test
+<5> La partie build n'utilise plus le `maven-war-plugin`
+
+Pour préparer les développements, on va également tout de suite créer quelques
+packages Java qui vont matérialiser notre architecture applicative.
+
+Créer les packages suivants:
+
+* `com.miage.alom.tp.pokemon_type_api.bo` : va contenir les objets métier de notre application
+* `com.miage.alom.tp.pokemon_type_api.config` : va contenir la configuration de notre application
+* `com.miage.alom.tp.pokemon_type_api.controller` : va contenir la configuration de notre application
+* `com.miage.alom.tp.pokemon_type_api.repository` : va contenir les repository de notre application
+* `com.miage.alom.tp.pokemon_type_api.service` : va contenir les services de notre application
+
+.Les packages Java de notre application
+image::images/packages.png[]
+
+Notre projet est prêt !
+
+[TIP]
+====
+On peut bien sûr utiliser les noms de package que l'on souhaite.
+Cette structure est une structure que l'on retrouve très souvent sur les projets
+d'entreprise
+====
+
+== La classe PokemonType
+
+Pour commencer, nous allons créer notre objet métier.
+
+=== La structure JSON
+
+Pour implémenter notre objet, nous devons nous inspirer des champs que propose l'API https://pokeapi.co[,window="_blank"].
+
+Par exemple, voici ce qu'on obtient en appelant l'API (un peu simplifié):
+
+.Electhor !
+[source,json]
+----
+{
+    "base_experience": 261,
+    "height": 16,
+    "id": 145,
+    "moves": [],
+    "name": "zapdos",
+    "sprites": {
+        "back_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/145.png",
+        "back_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/shiny/145.png",
+        "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/145.png",
+        "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/145.png"
+    },
+    "stats": [
+        {
+            "base_stat": 100,
+            "effort": 0,
+            "stat": {
+                "name": "speed",
+                "url": "https://pokeapi.co/api/v2/stat/6/"
+            }
+        },
+        {
+            "base_stat": 90,
+            "effort": 0,
+            "stat": {
+                "name": "special-defense",
+                "url": "https://pokeapi.co/api/v2/stat/5/"
+            }
+        },
+        {
+            "base_stat": 125,
+            "effort": 3,
+            "stat": {
+                "name": "special-attack",
+                "url": "https://pokeapi.co/api/v2/stat/4/"
+            }
+        },
+        {
+            "base_stat": 85,
+            "effort": 0,
+            "stat": {
+                "name": "defense",
+                "url": "https://pokeapi.co/api/v2/stat/3/"
+            }
+        },
+        {
+            "base_stat": 90,
+            "effort": 0,
+            "stat": {
+                "name": "attack",
+                "url": "https://pokeapi.co/api/v2/stat/2/"
+            }
+        },
+        {
+            "base_stat": 90,
+            "effort": 0,
+            "stat": {
+                "name": "hp",
+                "url": "https://pokeapi.co/api/v2/stat/1/"
+            }
+        }
+    ],
+    "types": [
+        {
+            "slot": 2,
+            "type": {
+                "name": "flying",
+                "url": "https://pokeapi.co/api/v2/type/3/"
+            }
+        },
+        {
+            "slot": 1,
+            "type": {
+                "name": "electric",
+                "url": "https://pokeapi.co/api/v2/type/13/"
+            }
+        }
+    ],
+    "weight": 526
+}
+----
+
+=== Les classes Java
+
+Nous allons donc créer une classe Java qui reprend cette structure, mais en ne conservant que les champs
+qui nous intéressent.
+
+.com.miage.alom.pokemon_type_api.bo.PokemonType.java
+[source,java,linenums]
+----
+package com.miage.alom.pokemon_type_api.bo;
+
+public class PokemonType { //<1>
+
+    private int id;
+    private int baseExperience;
+    private int height;
+    private String name;
+    private Sprites sprites; //<3>
+    private Stats stats; //<3>
+    private int weight;
+    private List<String> types;
+
+    //<2>
+
+}
+----
+<1> On sélectionne les champs "id", "name", et "sprites"
+<2> On a besoin des getters et setters par la suite (pour les générer, utilisez kbd:[Alt+Inser] sous IntelliJ)
+<3> Pour les objets imbriqués, on utilise d'autres classes
+
+.com.miage.alom.pokemon_type_api.bo.Sprites.java
+[source,java,linenums]
+----
+package com.miage.alom.pokemon_type_api.bo;
+
+public class Sprites {
+
+    private String back_default;
+    private String front_default;
+
+}
+----
+
+.com.miage.alom.pokemon_type_api.bo.Stats.java
+[source,java,linenums]
+----
+package com.miage.alom.pokemon_type_api.bo;
+
+public class Stats {
+
+    private Integer speed;
+    private Integer defense;
+    private Integer attack;
+    private Integer hp;
+
+}
+----
+
+== Le repository
+
+=== Le fichier de données pokemon.
+
+Récupérez le fichier link:pokemons.json[pokemons.json,window="_blank"] et enregistrez le dans le répertoire `src/main/resources` de votre projet.
+
+[WARNING]
+====
+Attention, le fichier pokemons.json a été modifié depuis le dernier TP. Il comprend maintenant en plus, la liste des types d'un PokemonType donné.
+Par exemple, `Pikachu` est de type `electric`. Les pokémons sont également maintenant dans le désordre!
+====
+
+=== L'ajout de la dépendance jackson-databind
+
+Ajoutez la dépendance suivante dans votre `pom.xml`
+
+.pom.xml
+[source,xml,linenums]
+----
+<!-- jackson-databind for JSON manipulation -->
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.10.0</version>
+</dependency>
+----
+
+=== Le test unitaire
+
+Implémentez le test unitaire suivant :
+
+.src/test/java/com/miage/alom/tp/pokemon_type_api/repository/PokemonRepositoryImplTest.java
+[source,java,linenums]
+----
+package com.miage.alom.pokemon_type_api.repository;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class PokemonTypeRepositoryImplTest {
+
+    private PokemonTypeRepositoryImpl repository = new PokemonTypeRepositoryImpl();
+
+    @Test
+    void findPokemonTypeById_with25_shouldReturnPikachu(){
+        var pikachu = repository.findPokemonTypeById(25);
+        assertNotNull(pikachu);
+        assertEquals("pikachu", pikachu.getName());
+        assertEquals(25, pikachu.getId());
+    }
+
+    @Test
+    void findPokemonTypeById_with145_shouldReturnZapdos(){
+        var zapdos = repository.findPokemonTypeById(145);
+        assertNotNull(zapdos);
+        assertEquals("zapdos", zapdos.getName());
+        assertEquals(145, zapdos.getId());
+    }
+
+    @Test
+    void findPokemonTypeByName_withEevee_shouldReturnEevee(){
+        var eevee = repository.findPokemonTypeByName("eevee");
+        assertNotNull(eevee);
+        assertEquals("eevee", eevee.getName());
+        assertEquals(133, eevee.getId());
+    }
+
+    @Test
+    void findPokemonTypeByName_withMewTwo_shouldReturnMewTwo(){
+        var mewtwo = repository.findPokemonTypeByName("mewtwo");
+        assertNotNull(mewtwo);
+        assertEquals("mewtwo", mewtwo.getName());
+        assertEquals(150, mewtwo.getId());
+    }
+
+    @Test
+    void findAllPokemonType_shouldReturn151Pokemons(){
+        var pokemons = repository.findAllPokemonType();
+        assertNotNull(pokemons);
+        assertEquals(151, pokemons.size());
+    }
+
+}
+----
+
+=== L'implémentation
+
+Ajouter l'interface du PokemonTypeRepository et son implémentation
+
+.src/main/java/com/miage/alom/tp/pokemon_type_api/repository/PokemonTypeRepository.java
+[source,java,linenums]
+----
+public interface PokemonTypeRepository {
+    PokemonType findPokemonTypeById(int id);
+    PokemonType findPokemonTypeByName(String name);
+    List<PokemonType> findAllPokemonType();
+}
+----
+
+.src/main/java/com/miage/alom/tp/pokemon_type_api/repository/PokemonTypeRepositoryImpl.java
+[source,java,linenums]
+----
+public class PokemonTypeRepositoryImpl implements PokemonTypeRepository {
+
+    private List<PokemonType> pokemons;
+
+    public PokemonTypeRepositoryImpl() {
+        try {
+            var pokemonsStream = this.getClass().getResourceAsStream("/pokemons.json"); //<1>
+
+            var objectMapper = new ObjectMapper(); //<2>
+            var pokemonsArray = objectMapper.readValue(pokemonsStream, PokemonType[].class);
+            this.pokemons = Arrays.asList(pokemonsArray);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public PokemonType findPokemonTypeById(int id) {
+        System.out.println("Loading Pokemon information for Pokemon id " + id);
+
+        // TODO <3>
+    }
+
+    @Override
+    public PokemonType findPokemonTypeByName(String name) {
+        System.out.println("Loading Pokemon information for Pokemon name " + name);
+
+        // TODO <3>
+    }
+
+    @Override
+    public List<PokemonType> findAllPokemonType() {
+        // TODO <3>
+    }
+}
+----
+<1> On charge le fichier json depuis le classpath (`maven` ajoute le répertoire `src/main/resources` au classpath java !)
+<2> On utilise l'ObjectMapper de `jackson-databind` pour transformer les objets JSON en objets JAVA
+<3> On a un peu de code à compléter !
+
+== Ajout de Spring
+
+Maintenant que nous avons un repository, nous allons utiliser Spring pour
+l'instancier !
+
+=== La dépendance à Spring
+
+Modifiez votre `pom.xml` pour ajouter la dépendance à Spring :
+
+.pom.xml
+[source,xml,linenums]
+----
+<!-- spring -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>5.2.0.RELEASE</version>
+</dependency>
+----
+
+=== Le test unitaire
+
+Modifiez le test unitaire de votre repository pour ajouter des éléments liés à Spring
+
+.PokemonRepositoryImplTest.java
+[source,java,linenums]
+----
+@Test
+void applicationContext_shouldLoadPokemonRepository(){
+    //<1>
+    var context = new AnnotationConfigApplicationContext("com.miage.alom.tp.pokemon_type_api.repository");
+    var repoByName = context.getBean("pokemonTypeRepositoryImpl"); //<2>
+    var repoByClass = context.getBean(PokemonTypeRepository.class); //<3>
+
+    assertEquals(repoByName, repoByClass);
+    assertNotNull(repoByName);
+    assertNotNull(repoByClass);
+}
+----
+<1> Ici, on instancie un `ApplicationContext` Spring, qui est capable d'analyser les annotations Java
+on lui donne le nom du package Java que l'on souhaite analyser !
+<2> Une fois le context instancié, on lui demande de récupérer le repository
+en utilisant le nom du bean (par défaut le nom de la classe en CamelCase)
+<3> ou en utilisant directement une classe assignable pour notre objet (ici l'interface !)
+
+Pour que Spring arrive à trouver notre classe de repository, il faut poser une annotation dessus !
+
+.PokemonTypeRepositoryImpl.java
+[source,java,linenums]
+----
+@Repository
+public class PokemonTypeRepositoryImpl implements PokemonTypeRepository {
+    [...]
+}
+----
+
+[IMPORTANT]
+Cette phase doit bien être terminée avant de passer à la suite !
+
+== Le service
+
+Maintenant que nous avons un repository fonctionnel, il est temps de développer
+un service qui consomme notre repository !
+
+=== Le test unitaire
+
+.src/test/java/com/miage/alom/tp/pokemon_type_api/service/PokemonTypeServiceImplTest.java
+[source,java,linenums]
+----
+package com.miage.alom.tp.pokemon_type_api.service;
+
+import com.miage.alom.tp.pokemon_type_api.repository.PokemonTypeRepository;
+import org.junit.jupiter.api.Test;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+class PokemonTypeServiceImplTest {
+
+    @Test
+    void pokemonTypeRepository_shouldBeCalled_whenFindById(){
+        var pokemonTypeRepository = mock(PokemonTypeRepository.class); //<1>
+        var pokemonTypeService = new PokemonTypeServiceImpl(pokemonTypeRepository); //<2>
+
+        pokemonTypeService.getPokemonType(25);
+
+        verify(pokemonTypeRepository).findPokemonTypeById(25);
+    }
+
+    @Test
+    void pokemonTypeRepository_shouldBeCalled_whenFindAll(){
+        var pokemonTypeRepository = mock(PokemonTypeRepository.class); //<1>
+        var pokemonTypeService = new PokemonTypeServiceImpl(pokemonTypeRepository); //<2>
+
+        pokemonTypeService.getAllPokemonTypes();
+
+        verify(pokemonTypeRepository).findAllPokemonType();
+    }
+
+}
+----
+<1> On crée un mock du PokemonTypeRepository
+<2> et on l'__injecte__ via le constructeur !
+
+=== L'implémentation
+
+L'interface Java
+
+.src/main/java/com/miage/alom/tp/pokemon_type_api/service/PokemonTypeService.java
+[source,java,linenums]
+----
+public interface PokemonTypeService {
+    PokemonType getPokemonType(int id);
+    List<PokemonType> getAllPokemonTypes();
+}
+----
+
+et son implémentation
+
+.src/main/java/com/miage/alom/tp/pokemon_type_api/service/PokemonTypeServiceImpl.java
+[source,java,linenums]
+----
+package com.miage.alom.tp.pokemon_type_api.service;
+
+import com.miage.alom.tp.pokemon_type_api.bo.PokemonType;
+
+import java.util.List;
+
+public class PokemonTypeServiceImpl implements PokemonTypeService{
+
+    public PokemonTypeServiceImpl(){ // TODO <1>
+
+    }
+
+    @Override
+    public PokemonType getPokemonType(int id) {
+        // TODO <1>
+    }
+
+    @Override
+    public List<PokemonType> getAllPokemonTypes(){
+        // TODO <1>
+    }
+}
+----
+<1> à implémenter !
+
+=== Implémentation avec Spring
+
+Ajouter les tests suivants au `PokemonTypeServiceImplTest`.
+
+.PokemonTypeServiceImplTest
+[source,java,linenums]
+----
+@Test
+void applicationContext_shouldLoadPokemonTypeService(){
+    var context = new AnnotationConfigApplicationContext("com.miage.alom.tp.pokemon_type_api");
+    var serviceByName = context.getBean("pokemonTypeServiceImpl");
+    var serviceByClass = context.getBean(PokemonTypeService.class);
+
+    assertEquals(serviceByName, serviceByClass);
+    assertNotNull(serviceByName);
+    assertNotNull(serviceByClass);
+}
+
+@Test
+void pokemonTypeRepository_shouldBeAutowired_withSpring(){
+    var context = new AnnotationConfigApplicationContext("com.miage.alom.tp.pokemon_type_api");
+    var service = context.getBean(PokemonTypeServiceImpl.class);
+    assertNotNull(service.pokemonTypeRepository);
+}
+----
+
+[NOTE]
+Vous aurez également besoin d'importer les assertions de Junit en utilisant `import static org.junit.jupiter.api.Assertions.*`
+
+[TIP]
+====
+N'oubliez pas que Spring utilise beaucoup les annotations Java, en voici
+quelques unes :
+
+* @Component
+* @Service
+* @Repository
+* @Autowired
+
+N'oubliez pas que certaines de ces annotations peuvent être posées sur des classes,
+sur des méthodes, ou sur des constructeurs !
+====
+
+[NOTE]
+====
+Imaginez un peu comment on aurait pu utiliser cette mécanique au sein de la DispatcherServlet
+que nous avons écrit la semaine dernière...
+====
+
+== Le Controlleur
+
+Implémentons un Controlleur afin d'exposer nos Pokemons en HTTP/REST/JSON.
+
+=== La dépendance à spring-boot
+
+Pour notre Controlleur, et l'exposition en web-service, nous allons utiliser maintenant spring-boot.
+
+Nous devons fortement impacter notre `pom.xml` !
+
+Ajoutez le bloc suivant (au dessus du bloc `<dependencies>` :
+
+.pom.xml
+[source,xml,linenums]
+----
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId> <!--1-->
+    <version>2.2.0.RELEASE</version>
+</parent>
+----
+<1> On importe le pom.xml parent de spring-boot. Cet _héritage_ nous permet de bénéficier
+de toutes les déclarations de dépendences qui sont déjà proposées par spring-boot. Ce fichier pom
+peut être consulté sur le
+https://github.com/spring-projects/spring-boot/blob/master/spring-boot-project/spring-boot-parent/pom.xml[Github de spring-boot,window="_blank"]
+
+Supprimez de votre `pom.xml` les dépendances `spring-context` et `jackson-databind` que nous avions ajouté précédemment,
+et ajoutez la dépendance suivante :
+
+.pom.xml
+[source,xml,linenums]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId> <!--1-->
+</dependency>
+----
+<1> Cette dépendance est visible https://github.com/spring-projects/spring-boot/blob/master/spring-boot-project/spring-boot-starters/spring-boot-starter-web/pom.xml[ici]
+
+Le simple ajout de cette dépendence nous remonte l'ensemble des dépendences suivantes:
+
+image::images/spring-boot-dependencies.png[]
+
+On retrouve donc (entre autres):
+
+* jackson-databind (conversions Java/JSON)
+* tomcat-embed (Tomcat en version embedded !)
+* spring-context (le célèbre)
+* spring-web (la partie controlleurs de Spring)
+
+=== Le test unitaire
+
+Le controlleur est simple et s'inpire de ce que nous avons fait au TP précédent.
+Cependant, nous n'aurons plus à gérer les paramètres manuellement via une `Map<String,String>`,
+mais nous allons utiliser toute la puissance de Spring.
+
+.src/test/java/com/miage/alom/tp/pokemon_type_api/controller/PokemonTypeControllerTest.java
+[source,java,linenums]
+----
+package com.miage.alom.tp.pokemon_type_api.controller;
+
+import com.miage.alom.tp.pokemon_type_api.bo.PokemonType;
+import com.miage.alom.tp.pokemon_type_api.service.PokemonTypeService;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class PokemonTypeControllerTest {
+
+    @Test
+    void getPokemonType_shouldCallTheService(){
+        var service = mock(PokemonTypeService.class);
+        var controller = new PokemonTypeController(service);
+
+        var pikachu = new PokemonType();
+        pikachu.setId(25);
+        pikachu.setName("pikachu");
+        when(service.getPokemonType(25)).thenReturn(pikachu);
+
+        var pokemon = controller.getPokemonTypeFromId(25);
+        assertEquals("pikachu", pokemon.getName());
+
+        verify(service).getPokemonType(25);
+    }
+
+    @Test
+    void getAllPokemonTypes_shouldCallTheService(){
+        var service = mock(PokemonTypeService.class);
+        var controller = new PokemonTypeController(service);
+
+        controller.getAllPokemonTypes();
+
+        verify(service).getAllPokemonTypes();
+    }
+
+}
+----
+
+=== L'implémentation
+
+Compléter l'implémentation du controller :
+
+.src/main/java/com/miage/alom/tp/pokemon_type_api/controller/PokemonTypeController.java
+[source,java,linenums]
+----
+class PokemonTypeController {
+
+    public PokemonTypeController() { //<1>
+    }
+
+    PokemonType getPokemonTypeFromId(int id){
+        // TODO <1>
+    }
+
+    public List<PokemonType> getAllPokemonTypes() {
+        // TODO <1>
+    }
+}
+----
+<1> Implémentez !
+
+=== L'instrumentation pour spring-web !
+
+Une fois les tests passés, nous pouvons implementer notre controlleur pour Spring web !
+
+==== Les tests unitaires
+
+Ajoutez les tests unitaires suivants à la classe `PokemonTypeControllerTest`
+
+.PokemonTypeControllerTest.java
+[source,java,linenums]
+----
+@Test
+void pokemonTypeController_shouldBeAnnotated(){
+    var controllerAnnotation =
+            PokemonTypeController.class.getAnnotation(RestController.class);
+    assertNotNull(controllerAnnotation);
+
+    var requestMappingAnnotation =
+            PokemonTypeController.class.getAnnotation(RequestMapping.class);
+    assertArrayEquals(new String[]{"/pokemon-types"}, requestMappingAnnotation.value());
+}
+
+@Test
+void getPokemonTypeFromId_shouldBeAnnotated() throws NoSuchMethodException {
+    var getPokemonTypeFromId =
+            PokemonTypeController.class.getDeclaredMethod("getPokemonTypeFromId", int.class);
+    var getMapping = getPokemonTypeFromId.getAnnotation(GetMapping.class);
+
+    assertNotNull(getMapping);
+    assertArrayEquals(new String[]{"/{id}"}, getMapping.value());
+}
+
+@Test
+void getAllPokemonTypes_shouldBeAnnotated() throws NoSuchMethodException {
+    var getAllPokemonTypes =
+            PokemonTypeController.class.getDeclaredMethod("getAllPokemonTypes");
+    var getMapping = getAllPokemonTypes.getAnnotation(GetMapping.class);
+
+    assertNotNull(getMapping);
+    assertArrayEquals(new String[]{"/"}, getMapping.value());
+}
+----
+
+==== L'implémentation
+
+Posez les bonnes annotations spring pour instrumenter votre Controller et faire passer les tests unitaires.
+
+[TIP]
+====
+Pour vous aider, voici des liens vers la documentation de spring-web :
+
+* https://docs.spring.io/spring/docs/5.2.0.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping[@RequestMapping]
+====
+
+=== L'exécution de notre projet !
+
+Pour exécuter notre projet, nous devons écrire un main java !
+Implémentez la classe suivante :
+
+.src/main/java/com/miage/alom/tp/pokemon_type_api/Application.java
+[source,java,linenums]
+----
+@SpringBootApplication //<1>
+public class Application {
+
+    public static void main(String... args){
+        SpringApplication.run(Application.class, args); //<2>
+    }
+}
+----
+<1> On annote la classe comme étant le point d'entrée de notre application
+<2> On implémente un main pour démarrer notre application !
+
+
+Démarrez le main, et observez les logs :
+
+[source,text]
+----
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) ) <1>
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.1.2.RELEASE)
+
+[..] [main] c.m.a.tp.pokemon_type_api.Application    : Starting Application on jwittouck-N14xWU with PID 12414 (/home/jwittouck/workspaces/alom/alom-2020-2021/tp/pokemon-type-api/target/classes started by jwittouck in /home/jwittouck/workspaces/alom/alom-2020-2021)
+[..] [main] c.m.a.tp.pokemon_type_api.Application    : No active profile set, falling back to default profiles: default
+[..]  INFO 12414 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+[..] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat] <2>
+[..] [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.14]
+[..] [main] o.a.catalina.core.AprLifecycleListener   : The APR based Apache Tomcat Native library which allows optimal performance in production environments was not found on the java.library.path: [/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib]
+[..] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+[..] [main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1617 ms
+[..] [main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+[..] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+[..] [main] c.m.a.tp.pokemon_type_api.Application    : Started Application in 2.72 seconds (JVM running for 3.191)
+----
+<1> Wao!
+<2> On voit que un Tomcat est démarré sur le port 8080
+
+On peut maintenant tester manuellement les URLs suivantes:
+
+* link:http://localhost:8080/pokemon-types/[,window="_blank"]
+* link:http://localhost:8080/pokemon-types/25[,window="_blank"]
+
+==== Plus de logs !
+
+Nous voulons un peu plus de logs pour bien comprendre ce que fait spring-boot.
+
+Pour ce faire, nous allons monter le niveau de logs au niveau `TRACE`.
+
+Créer un fichier `application.properties` dans le répertoire `src/main/resources`.
+
+.src/main/resources/application.properties
+[source,properties,linenums]
+----
+# on demande un niveau de logs TRACE à spring-web
+logging.level.web=TRACE
+----
+
+Relancez l'application, vous devriez voir spring logguer ceci :
+
+[source,text]
+----
+[main] s.w.s.m.m.a.RequestMappingHandlerMapping :
+	c.m.a.t.p.c.PokemonTypeController: <1>
+	{GET /pokemon-types/{id}}: getPokemonTypeFromId(int)
+	{GET /pokemon-types/}: getAllPokemonTypes()
+[main] s.w.s.m.m.a.RequestMappingHandlerMapping :
+	o.s.b.a.w.s.e.BasicErrorController: <2>
+	{ /error, produces [text/html]}: errorHtml(HttpServletRequest,HttpServletResponse)
+	{ /error}: error(HttpServletRequest)
+----
+<1> On voit que spring a bien pris en compte notre controlleur
+<2> On voit également que spring a instancié un controlleur pour afficher des erreurs sous forme de page HTML
+
+==== Plus de test
+
+Nous allons également rajouter un dernier test, qui a pour but de :
+
+* démarrer l'application spring en utilisant un port aléatoire
+* invoquer dynamiquement notre URL
+
+Ajoutez la dépendance suivante à votre `pom.xml`
+
+.pom.xml
+[source,xml,linenums]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+</dependency>
+----
+
+NOTE: L'ajout de `spring-boot-starter-test`, depuis la version 2.2.0, ajoute également `junit-jupiter` et `mockito`. Vous pouvez donc supprimer ces dépendances de votre pom.
+
+[NOTE]
+Ce genre de test, qui démarre une base de données ou un serveur par exemple, est appelé test d'intégration
+
+Implémentez le test unitaire suivant :
+
+.com.miage.alom.tp.pokemon_type_api.controller.PokemonTypeControllerIntegrationTest
+[source,java,linenums]
+----
+package com.miage.alom.tp.pokemon_type_api.controller;
+
+import com.miage.alom.tp.pokemon_type_api.bo.PokemonType;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT) //<1>
+class PokemonTypeControllerIntegrationTest {
+
+    @LocalServerPort //<2>
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate; //<3>
+
+    @Autowired
+    private PokemonTypeController controller; //<4>
+
+    @Test
+    void pokemonTypeController_shouldBeInstanciated(){ //<4>
+        assertNotNull(controller);
+    }
+
+    @Test
+    void getPokemon_withId25_ShouldReturnPikachu() throws Exception {
+        var url = "http://localhost:" + port + "/pokemon-types/25"; //<5>
+
+        var pikachu = this.restTemplate.getForObject(url, PokemonType.class); //<6>
+
+        assertNotNull(pikachu); //<7>
+        assertEquals(25, pikachu.getId());
+        assertEquals("pikachu", pikachu.getName());
+        assertEquals(4, pikachu.getHeight());
+    }
+}
+----
+<1> On utilise un `SpringBootTest` pour exécuter ce test. Ce test va donc instancier Spring. On précise également que l'environnement Spring doit utiliser un port aléatoire.
+<2> On demande à Spring de nous donner le port sur lequel le serveur aura été démarré
+<3> On demande à Spring de nous donner un `TestRestTemplate`, qui nous permettra de jouer une requête HTTP
+<4> On peut faire directement de l'injection de dépendance dans notre test, nous en profitons pour valider que notre controller est bien chargé.
+<5> On construit dynamiquement l'url à invoquer
+<6> On utilise le `TestRestTemplate` pour appeler notre API ! Le `TestRestemplate` va également se charger de convertir le JSON reçu, en objet Java en utilisant `jackson-databind`.
+<7> Enfin, on valide que Pikachu est arrivé en bon état !
+
+== Autres routes
+
+Implémentez la route qui permet de récupérer un pokemon par son nom.
+
+Elle doit être disponible via ces url de test :
+
+* link:http://localhost:8080/pokemon-types/?name=pikachu[,window="_blank"]
+* link:http://localhost:8080/pokemon-types/?name=mew[,window="_blank"]
+
+== Packager notre micro-service
+
+Une fois notre service fonctionnel, nous pouvons le packager.
+Notre micro-service sera packagé dans un _jar_ exécutable !
+
+=== Ajouter le plugin spring-boot au pom.xml
+
+Ajoutez le bloc suivant dans votre `pom.xml`
+
+.pom.xml
+[source,xml,linenums]
+----
+<build>
+    <pluginManagement>
+    ...
+    </pluginManagement>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+    </plugins>
+</build>
+----
+
+L'ajout de ce plugin nous met à disposition de nouvelles tâches maven !
+
+image::images/spring-boot-plugin.png[]
+
+Nous pouvons lancer notre application en exécutant la commande suivante :
+
+[source,bash]
+----
+mvn spring-boot:run
+----
+
+=== Packager notre micro-service
+
+Avant de package notre micro-service, nous devons impacter le `PokemonTypeRepositoryImpl`.
+La mécanique d'exécution de spring-boot utilise 2 classpaths Java, ce qui impose que les fichiers
+de ressources (en particulier notre fichier JSON), doivent être chargés différemment.
+
+Modifiez le constructeur du repository pour être le suivant :
+
+.PokemonTypeRepositoryImpl.java
+[source,java,linenums]
+----
+public PokemonTypeRepositoryImpl() {
+    try {
+        var pokemonsStream = new ClassPathResource("pokemons.json").getInputStream();
+
+        var objectMapper = new ObjectMapper();
+        var pokemonsArray = objectMapper.readValue(pokemonsStream, PokemonType[].class);
+        this.pokemons = Arrays.asList(pokemonsArray);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+----
+
+Pour créer un jar de notre service, il faut maintenant lancer la commande :
+
+[source,bash]
+----
+mvn package
+----
+
+Et pour l'exécuter, il suffit alors de lancer :
+
+[source,bash]
+----
+java -jar target/pokemon-type-api-0.1.0.jar
+----
+
+[NOTE]
+La contruction de _jar_ "autoporté" spring-boot, est aujourd'hui l'état de l'art des approches micro-service !
+
+== Pour aller plus loin
+
+Les types de pokemons sont des données "référentielles". Cela signifie qu'elles seront le plus souvent accédées en lecture seule.
+Cependant, nous pouvons développer des routes supportant des paramètres supplémentaires pour être capable de recherche plus finement un pokémon !
+
+Par défaut, la liste des pokémons pourrait également être triée par id.
+
+Il serait intéressant de développer les routes suivantes pour notre jeu :
+
+* link:http://localhost:8080/pokemon-types/?types=electric[,window="_blank"] (9 pokémons ont le type électrique)
+* link:http://localhost:8080/pokemon-types/?types=bug,poison[,window="_blank"] (5 pokémons ont les types insecte et poison)
