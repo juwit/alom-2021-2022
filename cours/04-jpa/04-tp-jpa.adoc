@@ -1,0 +1,1002 @@
+:source-highlighter: pygments
+:prewrap!:
+
+:icons: font
+
+:toc: left
+:toclevels: 4
+
+:linkattrs:
+
+:sectlinks:
+:sectanchors:
+:sectnums:
+
+:experimental:
+
+= ALOM - TP 4 - JPA & Repositories
+
+== Présentation et objectifs
+
+image::images/architecture.svg[inline]
+
+Le but est de continuer le développement de notre architecture "à la microservice".
+
+Pour rappel, dans cette architecture, chaque composant a son rôle précis :
+
+* la servlet reçoit les requêtes HTTP, et les envoie au bon controller (rôle de point d'entrée de l'application)
+* le controlleur implémente une méthode Java par route HTTP, récupère les paramètres, et appelle le service (rôle de routage)
+* le service implémente le métier de notre micro-service
+* le repository représente les accès aux données (avec potentiellement une base de données)
+
+Et pour s'amuser un peu, nous allons réaliser un micro-service qui nous renvoie des données sur les dresseurs de Pokemon !
+
+Ce micro-service se connectera à terme au micro service de pokemon management !
+
+image::images/trainer-service.png[]
+
+Nous allons développer :
+
+1. un repository d'accès aux données de Trainers (à partir d'une base de données)
+2. un service d'accès aux données
+3. annoter ces composants avec les annotations de Spring et les tester
+4. créer un controlleur spring pour gérer nos requêtes HTTP / REST
+5. charger quelques données
+
+[TIP]
+====
+Nous repartons de zéro pour ce TP !
+====
+
+== Github
+
+Identifiez vous sur Github, et cliquez sur le lien suivant pour créer votre repository git: https://classroom.github.com/a/9f3jw7Rl[Github classroom,window="_blank"]
+
+Clonez ensuite votre repository git sur votre poste !
+
+[NOTE]
+====
+A partir de ce TP, votre repository nouvellement créé contiendra un squelette de projet contenant:
+
+* un fichier `pom.xml` basique
+* l'arborescence projet:
+** `src/main/java`
+** `src/main/resources`
+** `src/test/java`
+** `src/test/resources`
+
+image::images/arbo.png[]
+====
+
+== Le `pom.xml`
+
+Modifiez le fichier pom.xml à la racine du projet
+
+[source,xml,linenums]
+----
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.miage.alom</groupId>
+    <artifactId>trainer-api</artifactId> <!--1-->
+    <version>0.1.0</version>
+    <packaging>jar</packaging> <!--2-->
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.5</version> <!--2-->
+    </parent>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source> <!--3-->
+        <maven.compiler.target>11</maven.compiler.target> <!--3-->
+    </properties>
+
+    <dependencies>
+
+        <!-- spring-boot web-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId> <!--2-->
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- testing --> <!--4-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+
+    </dependencies>
+
+     <build> <!--5-->
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.22.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
+----
+<1> Modifiez votre `artifactId`
+<2> Cette fois, on utilise directement `spring-boot` pour construire un `jar`
+<3> en java 11...
+<4> On positionne https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html[spring-boot-starter-test,window="_blank"]
+qui nous importe JUnit et Mockito !
+<5> La partie build utilise le `spring-boot-maven-plugin`
+
+NOTE: On reste en Java 11 pour ce TP (contrainte pour le déploiement chez clever-cloud où Java 17 n'est pas encore disponible)
+
+Pour préparer les développements, on va également tout de suite créer quelques
+packages Java qui vont matérialiser notre architecture applicative.
+
+Créer les packages suivants:
+
+* `com.miage.alom.trainer_api.bo` : va contenir les objets métier de notre application
+* `com.miage.alom.trainer_api.controller` : va contenir la configuration de notre application
+* `com.miage.alom.trainer_api.repository` : va contenir les repository de notre application
+* `com.miage.alom.trainer_api.service` : va contenir les services de notre application
+
+.Les packages Java de notre application
+image::images/packages.png[]
+
+Notre projet est prêt !
+
+== Le repository
+
+Lors du TP précédent, nous avions écrit un repository qui utilisait un fichier `JSON` comme source de données.
+
+Cette semaine, nous utiliserons directement une base de données, embarquée dans un premier temps.
+
+NOTE: Nous commençons les développements avec une base de données embarquée, puis nous testerons ensuite une base de données managée sur un cloud public.
+
+Cette base de données est http://www.h2database.com/html/main.html[H2].
+H2 est écrit en Java, implémente le standard http://www.h2database.com/html/grammar.html[SQL], et peut fonctionner
+directement en mémoire !
+
+=== L'ajout de la dépendance spring-boot-data-jpa et H2
+
+Ajoutez les dépendance suivantes dans votre `pom.xml`
+
+.pom.xml
+[source,xml,linenums]
+----
+<dependency> <!--1-->
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+<dependency> <!--2-->
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+<1> spring-boot-starter-data-jpa nous permet d'utiliser les repositories JPA !
+<2> La base de données H2, en scope test (nous utiliserons une vraie BDD en production !)
+
+=== Les business objects
+
+Nous allons manipuler, dans ce microservice, des dresseurs de Pokemon (Trainer), ainsi que leur équipe de Pokemons préférée
+(id de pokémon type + niveau).
+
+Nous allons donc commencer par écrire deux classes Java pour représenter nos données : `Trainer` et `Pokemon`
+
+.src/main/java/com/miage/alom/trainer_api/bo/Trainer.java
+[source,java,linenums]
+----
+// TODO
+public class Trainer { //<1>
+
+    private String name; //<2>
+
+    private List<Pokemon> team; //<3>
+
+    public Trainer() {
+    }
+
+    public Trainer(String name) {
+        this.name = name;
+    }
+
+    [...] //<4>
+}
+----
+<1> Notre classe de dresseur de Pokemon
+<2> Son nom (qui servira d'identifiant en base de données :) )
+<3> La liste de ses pokemons
+<4> Les getters/setters habituels (à générer avec kbd:[Alt+Inser] !)
+
+[NOTE]
+====
+Nous ne pouvons pas utiliser les `record` de Java 17 pour représenter les Trainers/Pokemon.
+Les _Entity_ JPA doivent:
+
+* être des classes non `final`
+* avoir un constructeur `public` sans argument
+* les attributs doivent être non `final`
+
+Les records ne respectent pas ces conditions, et donc on ne peut pas les utiliser pour le moment 😔.
+====
+
+.src/main/java/com/miage/alom/bo/Pokemon.java
+[source,java,linenums]
+----
+// TODO
+public class Pokemon {
+
+    private int pokemonTypeId; // <1>
+
+    private int level; // <2>
+
+    public Pokemon() {
+    }
+
+    public Pokemon(int pokemonTypeId, int level) {
+        this.pokemonTypeId = pokemonTypeId;
+        this.level = level;
+    }
+
+    [...] // <4>
+}
+----
+<1> le numéro de notre Pokemon dans le Pokedex (référence au service pokemon-type-api !)
+<2> le niveau de notre Pokemon !
+
+=== Les test unitaires
+
+Implémentez les tests unitaires suivant :
+
+.src/test/java/com/miage/alom/trainer_api/bo/TrainerTest.java
+[source,java,linenums]
+----
+package com.miage.alom.trainer_api.bo;
+
+import org.junit.jupiter.api.Test;
+
+import javax.persistence.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class TrainerTest {
+
+    @Test
+    void trainer_shouldBeAnEntity(){
+        assertNotNull(Trainer.class.getAnnotation(Entity.class)); //<1>
+    }
+
+    @Test
+    void trainerName_shouldBeAnId() throws NoSuchFieldException {
+        assertNotNull(Trainer.class.getDeclaredField("name").getAnnotation(Id.class)); //<2>
+    }
+
+    @Test
+    void trainerTeam_shouldBeAElementCollection() throws NoSuchFieldException {
+        assertNotNull(Trainer.class.getDeclaredField("team").getAnnotation(ElementCollection.class)); //<3>
+    }
+
+}
+----
+<1> Notre classe `Trainer` doit être annotée `@Entity` pour être reconnue par JPA
+<2> Chaque classe annotée `@Entity` doit déclarer un de ses champs comme étant un `@Id`. Dans le cas du `Trainer`,
+le champ `name` est idéal
+<3> La relation entre `Trainer` et `Pokemon` doit également être annotée. Ici, un `Trainer` possède une collection de `Pokemon`.
+
+.src/test/java/com/miage/alom/trainer_api/bo/PokemonTest.java
+[source,java,linenums]
+----
+class PokemonTest {
+
+    @Test
+    void pokemon_shouldBeAnEmbeddable(){
+        assertNotNull(Pokemon.class.getAnnotation(Embeddable.class)); //<1>
+    }
+
+}
+----
+<1> Notre classe `Pokmeon` doit aussi être annotée `@Embeddable` pour être reconnue par JPA
+
+.src/test/java/com/miage/alom/trainer_api/repository/TrainerRepositoryTest.java
+[source,java,linenums]
+----
+package com.miage.alom.trainer_api.repository;
+
+import [...]
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@DataJpaTest //<1>
+class TrainerRepositoryTest {
+
+    @Autowired //<2>
+    private TrainerRepository repository;
+
+    @Test
+    void trainerRepository_shouldExtendsCrudRepository() throws NoSuchMethodException {
+        assertTrue(CrudRepository.class.isAssignableFrom(TrainerRepository.class)); //<3>
+    }
+
+    @Test
+    void trainerRepositoryShouldBeInstanciedBySpring(){
+        assertNotNull(repository);
+    }
+
+    @Test
+    void testSave(){ //<4>
+        var ash = new Trainer("Ash");
+
+        repository.save(ash);
+
+        var saved = repository.findById(ash.getName()).orElse(null);
+
+        assertEquals("Ash", saved.getName());
+    }
+
+    @Test
+    void testSaveWithPokemons(){ //<5>
+        var misty = new Trainer("Misty");
+        var staryu = new Pokemon(120, 18);
+        var starmie = new Pokemon(121, 21);
+        misty.setTeam(List.of(staryu, starmie));
+
+        repository.save(misty);
+
+        var saved = repository.findById(misty.getName()).orElse(null);
+
+        assertEquals("Misty", saved.getName());
+        assertEquals(2, saved.getTeam().size());
+    }
+
+}
+----
+<1> On utilise un `@DataJpaTest` test, qui va démarrer spring (uniquement la partie gestion des repositories et base de données).
+<2> On utilise l'injection de dépendances spring dans notre test !
+<3> On valide que notre repository hérite du `CrudRepository` proposé par spring.
+<4> On test la sauvegarde simple
+<5> et la sauvegarde avec des objets en cascade !
+
+[NOTE]
+Ce type de test, appelé test d'intégration, a pour but de valider que l'application se contruit bien.
+Le démarrage de spring étant plus long que le simple couple JUnit/Mockito, on utilise souvent ces tests uniquement sur
+la partie repository
+
+[NOTE]
+Notre test sera exécuté avec une instance de base de données H2 instanciée à la volée !
+
+=== L'exécution de notre test
+
+Pour s'exécuter, notre test unitaire a besoin d'une application Spring-Boot !
+
+Implémentez la classe suivante :
+
+.src/main/java/com/miage/alom/trainer_api/TrainerApi.java
+[source,java,linenums]
+----
+package com.miage.alom.trainer_api;
+
+import [...]
+
+@SpringBootApplication //<1>
+public class TrainerApi {
+
+    public static void main(String... args){ //<2>
+        SpringApplication.run(TrainerApi.class, args);
+    }
+
+}
+
+----
+<1> On annote la classe comme étant le point d'entrée de notre application
+<2> On implémente un main pour démarrer notre application !
+
+=== L'implémentation
+
+Ajouter l'interface du TrainerRepository !
+
+.src/main/java/com/miage/alom/trainer_api/repository/TrainerRepository.java
+[source,java,linenums]
+----
+// TODO
+public interface TrainerRepository {
+}
+----
+
+[WARNING]
+Attention, ici, nous ne développerons pas l'implémentation du repository !
+C'est spring qui se chargera de nous en créer une instance à l'exécution !
+
+[TIP]
+====
+Pour vous aider, voici deux liens intéressants :
+
+* La documentation officielle de spring-data : https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#repositories
+* Et un tutoriel officiel : https://spring.io/guides/gs/accessing-data-jpa/
+====
+
+== Le service
+
+Maintenant que nous avons un repository fonctionnel, il est temps de développer
+un service qui consomme notre repository !
+
+=== Le test unitaire
+
+.src/test/java/com/miage/alom/trainer_api/service/TrainerServiceImplTest.java
+[source,java,linenums]
+----
+class TrainerServiceImplTest {
+
+    @Test
+    void getAllTrainers_shouldCallTheRepository() {
+        var trainerRepo = mock(TrainerRepository.class);
+        var trainerService = new TrainerServiceImpl(trainerRepo);
+
+        trainerService.getAllTrainers();
+
+        verify(trainerRepo).findAll();
+    }
+
+    @Test
+    void getTrainer_shouldCallTheRepository() {
+        var trainerRepo = mock(TrainerRepository.class);
+        var trainerService = new TrainerServiceImpl(trainerRepo);
+
+        trainerService.getTrainer("Ash");
+
+        verify(trainerRepo).findById("Ash");
+    }
+
+    @Test
+    void createTrainer_shouldCallTheRepository() {
+        var trainerRepo = mock(TrainerRepository.class);
+        var trainerService = new TrainerServiceImpl(trainerRepo);
+
+        var ash = new Trainer();
+        trainerService.createTrainer(ash);
+
+        verify(trainerRepo).save(ash);
+    }
+
+}
+----
+
+=== L'implémentation
+
+L'interface Java
+
+.src/main/java/com/miage/alom/trainer_api/service/TrainerService.java
+[source,java,linenums]
+----
+
+public interface TrainerService {
+
+    Iterable<Trainer> getAllTrainers();
+    Trainer getTrainer(String name);
+    Trainer createTrainer(Trainer trainer);
+}
+----
+
+et son implémentation
+
+.src/main/java/com/miage/alom/trainer_api/service/TrainerServiceImpl.java
+[source,java,linenums]
+----
+// TODO
+public class TrainerServiceImpl implements TrainerService { //<1>
+
+    private TrainerRepository trainerRepository;
+
+    public TrainerServiceImpl(TrainerRepository trainerRepository) {
+        this.trainerRepository = trainerRepository;
+    }
+
+    @Override
+    public Iterable<Trainer> getAllTrainers() {
+        // TODO
+    }
+
+    @Override
+    public Trainer getTrainer(String name) {
+        // TODO
+    }
+
+    @Override
+    public Trainer createTrainer(Trainer trainer) {
+        // TODO
+    }
+}
+----
+<1> à implémenter !
+
+[NOTE]
+Comme nous n'avons pas la main sur l'implémentation du repository (spring le crée dynamiquement), l'utilisation
+de l'injection de dépendances devient primordiale !
+
+== Le controlleur
+
+Implémentons un Controlleur afin d'exposer nos Trainers en HTTP/REST/JSON.
+
+=== Le test unitaire
+
+Le controlleur est simple et s'inpire de ce que nous avons fait au TP précédent.
+
+.src/test/java/com/miage/alom/trainer_api/controller/TrainerControllerTest.java
+[source,java,linenums]
+----
+class TrainerControllerTest {
+
+    @Mock
+    private TrainerService trainerService;
+
+    @InjectMocks
+    private TrainerController trainerController;
+
+    @BeforeEach
+    void setup(){
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    void getAllTrainers_shouldCallTheService() {
+        trainerController.getAllTrainers();
+
+        verify(trainerService).getAllTrainers();
+    }
+
+    @Test
+    void getTrainer_shouldCallTheService() {
+        trainerController.getTrainer("Ash");
+
+        verify(trainerService).getTrainer("Ash");
+    }
+}
+----
+
+=== L'implémentation
+
+Compléter l'implémentation du controller :
+
+.src/main/java/com/miage/alom/trainer_api/controller/TrainerController.java
+[source,java,linenums]
+----
+public class TrainerController {
+
+    private final TrainerService trainerService;
+
+    TrainerController(TrainerService trainerService){
+        this.trainerService = trainerService;
+    }
+
+    Iterable<Trainer> getAllTrainers(){
+        // TODO <1>
+    }
+
+    Trainer getTrainer(String name){
+        // TODO <1>
+    }
+
+}
+
+----
+<1> Implémentez !
+
+=== L'ajout des annotations Spring
+
+Ajoutez les méthodes de test suivantes dans la classe `TrainerControllerTest` :
+
+.TrainerControllerTest.java
+[source,java,linenums]
+----
+@Test
+void trainerController_shouldBeAnnotated(){
+    var controllerAnnotation =
+            TrainerController.class.getAnnotation(RestController.class);
+    assertNotNull(controllerAnnotation);
+
+    var requestMappingAnnotation =
+            TrainerController.class.getAnnotation(RequestMapping.class);
+    assertArrayEquals(new String[]{"/trainers"}, requestMappingAnnotation.value());
+}
+
+@Test
+void getAllTrainers_shouldBeAnnotated() throws NoSuchMethodException {
+    var getAllTrainers =
+            TrainerController.class.getDeclaredMethod("getAllTrainers");
+    var getMapping = getAllTrainers.getAnnotation(GetMapping.class);
+
+    assertNotNull(getMapping);
+    assertArrayEquals(new String[]{"/"}, getMapping.value());
+}
+
+@Test
+void getTrainer_shouldBeAnnotated() throws NoSuchMethodException {
+    var getTrainer =
+            TrainerController.class.getDeclaredMethod("getTrainer", String.class);
+    var getMapping = getTrainer.getAnnotation(GetMapping.class);
+
+    var pathVariableAnnotation = getTrainer.getParameters()[0].getAnnotation(PathVariable.class);
+
+    assertNotNull(getMapping);
+    assertArrayEquals(new String[]{"/{name}"}, getMapping.value());
+
+    assertNotNull(pathVariableAnnotation);
+}
+----
+
+Modifiez votre classe `TrainerController` pour faire passer les tests !
+
+=== L'exécution de notre projet !
+
+Pour exécuter notre projet, nous devons simplement lancer la classe `TrainerApi` écrite plus haut.
+
+Mais avant cela, modifions quelques propriétés de spring !
+
+==== Personnalisation de Spring-Boot
+
+Nous voulons un peu plus de logs pour bien comprendre ce que fait spring-boot.
+
+Pour ce faire, nous allons monter le niveau de logs au niveau `TRACE`.
+
+Créer un fichier `application.properties` dans le répertoire `src/main/resources`.
+
+.src/main/resources/application.properties
+[source,properties,linenums]
+----
+# on demande un niveau de logs TRACE à spring-web
+logging.level.web=TRACE
+# on modifie le port découte du tomcat !
+server.port=8081
+----
+
+[NOTE]
+Le répertoire `src/main/resources` est ajouté au classpath Java par IntelliJ, lors de l'exécution, et par Maven lors
+de la construction de notre jar !
+
+La liste des properties supportées est décrite dans la documentation de spring
+https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html[ici,window="_blank"]
+
+==== Ajout de données au démarrage
+
+Comme notre application ne contient aucune donnée au démarrage, nous allons en charger quelques unes "en dur" pour commencer.
+
+Ajoutez le code suivant dans la classe `TrainerApi` :
+
+.src/main/java/com/ifi/trainer_api/TrainerApi.java
+[source,java,linenums]
+----
+@Bean //<2>
+@Autowired //<3>
+public CommandLineRunner demo(TrainerRepository repository) { //<1>
+    return (args) -> { //<4>
+        var ash = new Trainer("Ash");
+        var pikachu = new Pokemon(25, 18);
+        ash.setTeam(List.of(pikachu));
+
+        var misty = new Trainer("Misty");
+        var staryu = new Pokemon(120, 18);
+        var starmie = new Pokemon(121, 21);
+        misty.setTeam(List.of(staryu, starmie));
+
+        // save a couple of trainers
+        repository.save(ash); //<5>
+        repository.save(misty);
+    };
+}
+----
+<1> On implémente un CommandLineRunner pour exécuter des commandes au démarrage de notre application
+<2> On utilise l’annotation @Bean sur notre méthode, pour en déclarer le retour comme étant un bean spring !
+<3> On utilise l'injection de dépendance sur notre méthode !
+<4> CommandLineRunner est une @FunctionnalInterface, on en fait une expression lambda.
+<5> On initialise quelques données !
+
+==== Exécution
+
+Démarrez le main, et observez les logs (j'ai réduit la quantité de logs pour qu'elle s'affiche correctement ici) :
+
+[source,text]
+----
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )  <1>
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.1.2.RELEASE)
+
+[main] [..] : Starting TrainerApi on jwittouck-N14xWU with PID 23154 (/home/jwittouck/workspaces/alom/alom-2020-2021/tp/trainer-api/target/classes started by jwittouck in /home/jwittouck/workspaces/alom/alom-2020-2021)
+[main] [..] : No active profile set, falling back to default profiles: default
+[main] [..] : Bootstrapping Spring Data repositories in DEFAULT mode.
+[main] [..] : Finished Spring Data repository scanning in 47ms. Found 1 repository interfaces.
+[main] [..] : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$ff9e9081] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+[main] [..] : Tomcat initialized with port(s): 8081 (http) <2>
+[main] [..] : Starting service [Tomcat] <2>
+[main] [..] : Starting Servlet engine: [Apache Tomcat/9.0.14]
+[main] [..] : The APR based Apache Tomcat Native library which allows optimal performance in production environments was not found on the java.library.path: [/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib]
+[main] [..] : Initializing Spring embedded WebApplicationContext
+[main] [..] : Published root WebApplicationContext as ServletContext attribute with name [org.springframework.web.context.WebApplicationContext.ROOT]
+[main] [..] : Root WebApplicationContext: initialization completed in 1487 ms
+[main] [..] : Added existing Servlet initializer bean 'dispatcherServletRegistration'; order=2147483647, resource=class path resource [org/springframework/boot/autoconfigure/web/servlet/DispatcherServletAutoConfiguration$DispatcherServletRegistrationConfiguration.class]
+[main] [..] : Created Filter initializer for bean 'characterEncodingFilter'; order=-2147483648, resource=class path resource [org/springframework/boot/autoconfigure/web/servlet/HttpEncodingAutoConfiguration.class]
+[main] [..] : Created Filter initializer for bean 'hiddenHttpMethodFilter'; order=-10000, resource=class path resource [org/springframework/boot/autoconfigure/web/servlet/WebMvcAutoConfiguration.class]
+[main] [..] : Created Filter initializer for bean 'formContentFilter'; order=-9900, resource=class path resource [org/springframework/boot/autoconfigure/web/servlet/WebMvcAutoConfiguration.class]
+[main] [..] : Created Filter initializer for bean 'requestContextFilter'; order=-105, resource=class path resource [org/springframework/boot/autoconfigure/web/servlet/WebMvcAutoConfiguration$WebMvcAutoConfigurationAdapter.class]
+[main] [..] : Mapping filters: characterEncodingFilter urls=[/*], hiddenHttpMethodFilter urls=[/*], formContentFilter urls=[/*], requestContextFilter urls=[/*]
+[main] [..] : Mapping servlets: dispatcherServlet urls=[/]
+[main] [..] : HikariPool-1 - Starting...
+[main] [..] : HikariPool-1 - Start completed.
+[main] [..] : HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+[main] [..] : HHH000412: Hibernate Core {5.3.7.Final} <3>
+[main] [..] : HHH000206: hibernate.properties not found
+[main] [..] : HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+[main] [..] : HHH000400: Using dialect: org.hibernate.dialect.H2Dialect
+[main] [..] : HHH000476: Executing import script 'org.hibernate.tool.schema.internal.exec.ScriptSourceInputNonExistentImpl@1ef93e01'
+[main] [..] : Initialized JPA EntityManagerFactory for persistence unit 'default'
+[main] [..] : Mapped [/**/favicon.ico] onto ResourceHttpRequestHandler [class path resource [META-INF/resources/], class path resource [resources/], class path resource [static/], class path resource [public/], ServletContext resource [/], class path resource []]
+[main] [..] : Patterns [/**/favicon.ico] in 'faviconHandlerMapping'
+[main] [..] : Initializing ExecutorService 'applicationTaskExecutor'
+[main] [..] : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+[main] [..] : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+[main] [..] :
+	c.m.a.t.t.c.TrainerController: <4>
+	{GET /trainers/}: getAllTrainers()
+	{GET /trainers/{name}}: getTrainer(String)
+[main] [..] :
+	o.s.b.a.w.s.e.BasicErrorController:
+	{ /error, produces [text/html]}: errorHtml(HttpServletRequest,HttpServletResponse)
+	{ /error}: error(HttpServletRequest)
+[main] [..] : 4 mappings in 'requestMappingHandlerMapping'
+[main] [..] : Detected 0 mappings in 'beanNameHandlerMapping'
+[main] [..] : Mapped [/webjars/**] onto ResourceHttpRequestHandler ["classpath:/META-INF/resources/webjars/"]
+[main] [..] : Mapped [/**] onto ResourceHttpRequestHandler ["classpath:/META-INF/resources/", "classpath:/resources/", "classpath:/static/", "classpath:/public/", "/"]
+[main] [..] : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+[main] [..] : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+[main] [..] : Tomcat started on port(s): 8081 (http) with context path ''
+[main] [..] : Started TrainerApi in 3.622 seconds (JVM running for 4.512)
+
+----
+<1> Wao!
+<2> On voit que un Tomcat est démarré, comme la dernière fois.
+Mais cette fois-ci, il utilise bien le port `8081` comme demandé dans le fichier `application.properties`
+<3> Le nom `Hibernate` vous dit quelque chose? spring-data utilise hibernate comme implémentation de la norme JPA !
+<4> On voit également nos controlleurs !
+
+On peut maintenant tester les URLs suivantes:
+
+* link:http://localhost:8081/trainers/[,window="_blank"]
+* link:http://localhost:8081/trainers/Ash[,window="_blank"]
+
+=== Le test d'intégration
+
+Comme pour le TP précédent, nous allons compléter nos développements avec un test d'intégration.
+
+Créez le test suivant:
+
+.src/test/java/com/miage/alom/trainer_api/controller/TrainerControllerIntegrationTest.java
+[source,java,linenums]
+----
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class TrainerControllerIntegrationTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private TrainerController controller;
+
+    @Test
+    void trainerController_shouldBeInstanciated(){
+        assertNotNull(controller);
+    }
+
+    @Test
+    void getTrainer_withNameAsh_shouldReturnAsh() {
+        var ash = this.restTemplate.getForObject("http://localhost:" + port + "/trainers/Ash", Trainer.class);
+        assertNotNull(ash);
+        assertEquals("Ash", ash.getName());
+        assertEquals(1, ash.getTeam().size());
+
+        assertEquals(25, ash.getTeam().get(0).getPokemonTypeId());
+        assertEquals(18, ash.getTeam().get(0).getLevel());
+    }
+
+    @Test
+    void getAllTrainers_shouldReturnAshAndMisty() {
+        var trainers = this.restTemplate.getForObject("http://localhost:" + port + "/trainers/", Trainer[].class);
+        assertNotNull(trainers);
+        assertEquals(2, trainers.length);
+
+        assertEquals("Ash", trainers[0].getName());
+        assertEquals("Misty", trainers[1].getName());
+    }
+}
+----
+
+== Utilisation d'une base de données managée sur le cloud public
+
+Pour remplacer notre base de données embarquée, nous pouvons nous connecter sur une base de données réelle, que nous allons
+instancier sur un cloud public.
+
+Pour ce faire, nous avons de nombreux clouds à disposition, avec des offres gratuites :
+
+* https://www.clever-cloud.com[clever-cloud] :
+** clever-cloud (🇫🇷) propose des bases de données postgresql managées gratuites, pour une taille de 250Mo maximum, avec 5 connexions simultanées.
+* https://aws.amazon.com/[AWS] (🇺🇸): le cloud d'Amazon
+** Amazon propose des bases de données managées via son service `RDS`. Ce service est disponible gratuitement pendant 12 mois à compter de la
+date de création du compte, et dans la limite de 750 heures / mois (une carte bleue doit être saisie)
+* https://cloud.google.com/[GCP] (🇺🇸): le cloud de Google
+** Google propose $300 de crédits offerts à l'inscription (une carte bleue doit être saisie)
+* https://www.heroku.com/[heroku] (🇺🇸):
+** Heroku propose également des bases de données postgresql managées gratuites, dans la limite de 10 000 lignes, avec 10 connexions simultanées.
+
+Pour ce TP, je prends l'exemple de clever-cloud, qui a aussi accepté de nous sponsoriser en nous offrant une organisation avec des crédits illimités 🙏.
+
+=== clever-cloud
+
+Créez un compte sur https://www.clever-cloud.com. Pour plus de facilité, vous pouvez très rapidement créer votre compte en l'associant à un compte Github.
+
+==== Instanciation de la base de données
+
+Une fois votre compte créé, vous pouvez instancier une base de données en quelques clics !
+
+Dans la console, sélectionnez `Create > an add-on`.
+
+image::images/clever-create.png[]
+
+Sélectionnez la base de données `postgresql`
+
+image::images/clever-create-postgresql.png[]
+
+Sélectionnez le plan `DEV`, qui est gratuit
+Donnez un nom à votre base de données, et sélectionnez la région `Paris` (un hébergement de notre base de données à Montréal
+créerait des temps de latence importants!)
+
+image::images/clever-dev-free-plan.png[]
+image::images/clever-naming-database.png[]
+
+Validez, et attendez quelques secondes! Votre base de données est prête!
+
+Accédez au dashboard de votre base de données. Vous pourrez y trouver:
+
+* Les informations de connexion à votre base de données
+* Des menus permettant de réinitialiser votre base, re-généré de nouveaux identifiants de connexions, ou effectuer un backup.
+* Vous pouvez également accéder à une interface "PGStudio" vous permettant de naviguer dans votre base de données.
+
+.la page d'informations de votre base de données !
+image::images/clever-database-information.png[]
+
+=== Configuration pour spring-boot
+
+Nous allons utiliser votre base de données nouvellement créée pour votre application !
+
+Modifiez votre `pom.xml` :
+
+* Ajoutez une dépendance à `postgresql` (qui contiendra le driver JDBC postgresql)
+* On positionne cette dépendance en scope `runtime`, car ce driver n'est nécessaire qu'à l'exécution
+
+.pom.xml
+[source,xml,linenums]
+----
+<dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>
+----
+
+Modifiez votre fichier `application.properties` pour y renseigner les informations de connexion à votre base de données :
+
+.application.properties
+[source,properties,linenums]
+----
+# utilisation de vos paramètres de connexion <1>
+spring.datasource.url=jdbc:postgresql://bae8fmg8aaq93hxlt9oa-postgresql.services.clever-cloud.com:5432/bae8fmg8aaq93hxlt9oa
+spring.datasource.username=uavsnnvtbaqfme3yhamr
+spring.datasource.password=rfeKGj4Vr6iExFDkVi0R
+
+# personnalisation de hibernate <2>
+spring.jpa.hibernate.ddl-auto = create-drop
+
+# personnalisation du pool de connexions <3>
+spring.datasource.hikari.maximum-pool-size=1
+----
+<1> Renseignez les paramètre de connexion à votre base de donnée (remplacez les valeurs de mon exemple)
+<2> L'utilisation du paramètre `spring.jpa.hibernate.ddl-auto` permet à hibernate de générer le schéma de base de données au démarrage de l'application.
+<3> par défault, spring-boot utilise le pool de connexion HikariCP pour gérer les connexions à la base de données.
+Comme le nombre de connexions est limité dans notre environnement, nous précisions que la taille maximale du pool est 1.
+
+[WARNING]
+====
+Attention, la _Connection URI_ que clever-cloud vous affiche contient le login et le mot de passe d'accès à la base de données, et n'est pas une URL JDBC, ne la copiez pas!
+Re-construisez votre URL JDBC en prenant les champs _Host_ et _Database Name_.
+====
+
+Pour rappel, la liste des propriétés acceptées par spring-boot peut se trouver dans leur https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html[documentation,window="_blank"].
+
+Le paramètre `spring.jpa.hibernate.ddl-auto` peut prendre les valeurs suivantes :
+
+* create : le schéma est créé au démarrage de l'application, toutes les données existantes sont écrasées
+* create-drop : le schéma est créé au démarrage de l'application, puis supprimé à son extinction (utile en développement)
+* update : le schéma de la base de données est mis à jour si nécessaire, les données ne sont pas impactées
+* validate : le schéma de la base de données est vérifié au démarrage
+
+[TIP]
+Dans IntelliJ, vous pouvez également vous connecter à votre base de données, utilisez le plugin `Database Tools & SQL`.
+
+=== Déploiement chez Clever-Cloud !
+
+WARNING: Pour cette partie, je dois vous donner les droits d'accès à l'organisation. Appelez moi pour que je puisse le faire avec vous !
+
+==== Configuration de votre application
+
+Clever-Cloud est capable d'exécuter tout type d'applicaton.
+Nous allons lui indiquer quel tâche maven appeler pour démarrer notre application.
+
+Créez le fichier `maven.json` dans le répertoire `clevercloud` de votre TP, pour lui indiquer d'utiliser la tâche maven `spring-boot:run` :
+
+.clevercloud/maven.json
+[source,json]
+----
+{
+    "deploy": {
+        "goal": "spring-boot:run"
+    }
+}
+
+----
+
+==== Déploiement
+
+Sur le dashboard Clever-Cloud, dans l'organisation `Université de Lille`, cliquez sur `Create... > an application`.
+
+image::images/clever-cloud-new-application.png[]
+
+De là, vous pouvez soit :
+* sélectionner un repository Github existant
+* créer une application "Brand new". La suite de cette procédure utilise cette option.
+
+Sélectionnez "Java + Maven"
+
+image::images/clever-cloud-maven.png[]
+
+image::images/clever-cloud-project-naming.png[]
+
+Validez les écrans.
+
+Clever vous donne ensuite un remote git sur lequel vous pouvez push votre code pour le déployer !
+
+
+== Pour aller plus loin
+
+* Implémentez la création et la mise à jour d'un `Trainer` (route en POST/PUT) + Tests unitaires et tests d'intégration
+----
+POST /trainers/
+
+{
+  "name": "Bug Catcher",
+  "team": [
+    {"pokemonTypeId": 13, "level": 6},
+    {"pokemonTypeId": 10, "level": 6}
+  ]
+}
+----
+* Implémentez la suppression d'un `Trainer` (route en DELETE) + Tests unitaires et tests d'intégration
+----
+DELETE /trainers/Bug%20Catcher
+----

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>ALOM - JPA</title>
+
+		<meta name="description" content="ALOM - Persistance de données avec JPA">
+		<meta name="author" content="Julien WITTOUCK <julien@codeka.io>">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="../css/reveal.css">
+		<link rel="stylesheet" href="../css/theme/white.css" id="theme">
+
+		<link rel="stylesheet" href="../css/miage-lille.css"/>
+
+        <link href="https://afeld.github.io/emoji-css/emoji.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+				<section>
+					<h2>ALOM</h2>
+					<h3><i class="em em-bookmark"></i> Persistance de données avec JPA</h3>
+				</section>
+
+				<section>
+                    <h3><i class="fab fa-uber"></i> UBER</h3>
+					<img src="images/Microservice-Architecture-Of-UBER.png" style="width: 50%"/>
+				</section>
+
+				<section>
+					<h3><img src="images/micro-service-poke.png" style="vertical-align: middle;"/> Un micro-service c'est :</h3>
+					<ul>
+                        <li>Un ensemble de fonctionnalités du même domaine métier</li>
+                        <li>
+							Un ou plusieurs canaux de communication
+							<ul>
+								<li>HTTP - REST/JSON</li>
+							</ul>
+						</li>
+						<li>Une source de données dédiée</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3><i class="em em-mag"></i> un micro-service Java</h3>
+					<p>On s'appuie sur les technologies connues: les servlets !</p>
+					<img src="images/architecture.svg"/>
+				</section>
+
+                <section>
+                    <h3><i class="em em-mag"></i> La source de données</h3>
+                    <p>Une application :</p>
+                    <ul>
+                        <li>fournit un service</li>
+                        <li>manipule des données</li>
+                    </ul>
+                    <p>Problématique :</p>
+                    <ul>
+                        <li>comment enregistrer des données?</li>
+                        <li>comment accéder aux données enregistrées?</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Design Best Practices</h3>
+                    <h3><i class="em em-male-police-officer"></i>S.O.L.I.D</h3>
+                </section>
+                <section>
+                    <h3>Design Pattern</h3>
+                    <h3><i class="em em-syringe"></i> Injection de dépendance</h3>
+                </section>
+                <section>
+                    <h3>Design Pattern</h3>
+                    <h3>DAO - Data Access Object</h3>
+                    <img src="images/dao-pattern.png"/>
+                </section>
+
+                <section>
+                    <h3><i class="em em-mag"></i> La source de données</h3>
+                    <uL>
+                        <li class="fragment">des fichiers</li>
+                        <li class="fragment">une API</li>
+                        <li class="fragment">une base de données SQL</li>
+                        <li class="fragment">une base de données NoSQL</li>
+                    </uL>
+                </section>
+
+                <section>
+                    <h3>Bases de données SQL</h3>
+                    <p>Modèle relationnel (SQL)</p>
+                    <ul>
+                        <li>Stockage de l'information en tables</li>
+                        <li>Relations entre les tables (clés étrangères)</li>
+                        <li>Requêtage dans un langage dédié : SQL</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Bases de données SQL</h3>
+                    <p>Comment lier le modèle BDD relationnel et le modèle objet Java?</p>
+                    <div style="width: 100%;">
+                        <div style="float: left;">
+                            <img src="images/ash-vs-misty.png">
+                        </div>
+                        <div style="font-size: large; float: right;">
+                            <table style="border: solid 2pt #095A80;">
+                                <thead style="background-color: #095A80; color: white;">
+                                <tr><td>id</td><td>name</td><td>sprite</td></tr>
+                                </thead>
+                                <tbody style="border: solid 2pt #095A80">
+                                <tr style="border: solid 2pt #095A80"><td>25</td><td>pikachu</td><td>pikachu.png</td></tr>
+                                <tr style="border: solid 2pt #095A80"><td>120</td><td>staryu</td><td>staryu.png</td></tr>
+                                <tr style="border: solid 2pt #095A80"><td>121</td><td>starmie</td><td>starmie.png</td></tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table style="border: solid 2pt #095A80;">
+                                <thead style="background-color: #095A80; color: white;">
+                                <tr><td>id</td><td>name</td></tr>
+                                </thead>
+                                <tbody style="border: solid 2pt #095A80">
+                                <tr style="border: solid 2pt #095A80"><td>1</td><td>ash</td></tr>
+                                <tr style="border: solid 2pt #095A80"><td>2</td><td>misty</td></tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table style="border: solid 2pt #095A80;">
+                                <thead style="background-color: #095A80; color: white;">
+                                <tr><td>trainer_id</td><td>pokemon_type</td><td>level</td></tr>
+                                </thead>
+                                <tbody style="border: solid 2pt #095A80">
+                                <tr style="border: solid 2pt #095A80"><td>1</td><td>25</td><td>18</td></tr>
+                                <tr style="border: solid 2pt #095A80"><td>2</td><td>120</td><td>18</td></tr>
+                                <tr style="border: solid 2pt #095A80"><td>2</td><td>121</td><td>21</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>à la dure : JDBC</h3>
+                    <img src="carbon/jdbc.png"/>
+                </section>
+
+                <section>
+                    <h3>Fonctionnement de JDBC</h3>
+                    <img src="images/jdbc-architecture.png"/>
+                </section>
+
+                <section>
+                    <h4>JDBC avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"> : <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#jdbc-JdbcTemplate">JDBCTemplate</a></h4>
+                    <img src="carbon/jdbcTemplate.png"/>
+                </section>
+
+                <section class="stack">
+                    <section>
+                        <h3>JPA - Java Persistence API</h3>
+                        <p>Surcouche à JDBC - Fournit un moyen de mapper les tables aux objets et une abstraction de l'exécution de requêtes via les <a href="https://javaee.github.io/javaee-spec/javadocs/javax/persistence/package-summary.html">annotations</a></p>
+                        <img src="carbon/trainer.png" style="width: 40%;"/>
+                    </section>
+                    <section>
+                        <h3>Fonctionnement de JPA</h3>
+                        <img src="images/04-jpa.png"/>
+                    </section>
+                    <section>
+                        <h4>JPA avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"> </h4>
+                        <p>Repository Spring/JPA (<a href="http://docs.spring.io/spring/docs/current/spring-framework-reference/html/dao.html">mode DAO</a>):</p>
+                        <img src="carbon/jpa.png" style="width: 70%;"/>
+                    </section>
+                    <section>
+                        <h3><img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"> <a href="http://docs.spring.io/spring-data/jpa/docs/current/reference/html/">spring-data JPA</a></h3>
+                        <p>Génération automatique des méthodes au runtime à partir d'interfaces!</p>
+                        <img src="carbon/spring-data-jpa.png"/>
+                    </section>
+                    <section>
+                        <h3><img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"> <a href="http://docs.spring.io/spring-data/jpa/docs/current/reference/html/">spring-data JPA</a></h3>
+                        <p>Configuration Maven</p>
+                        <img src="carbon/spring-data-maven.png" style="width: 60%;"/>
+                    </section>
+                </section>
+
+                <section>
+                    <h3>TP</h3>
+                    <img src="../images/leonidas.png"/>
+                    <p>
+                        <a href="04-tp-jpa.html">JPA & Spring repositories !</a>
+                    </p>
+                </section>
+
+                <section style="text-align:left;">
+                <h1>Fin du cours</h1>
+                </section>
+
+			</div>
+
+		</div>
+
+		<script src="../js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+                // controlsLayout: 'edges',
+                controlsBackArrows: 'faded',
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide'
+			});
+
+		</script>
+
+		<aside class="miage_aside_logo"></aside>
+
+    </body>
+</html>
