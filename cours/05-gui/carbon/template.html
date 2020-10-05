@@ -1,0 +1,15 @@
+{{#pokemons}}
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h4>{{name}} <span class="badge badge-secondary">Id {{id}}</span></h4>
+    </div>
+    <img class="card-img-top" src="{{sprites.front_default}}" alt="sprite of {{name}}">
+
+    <div class="card-body">
+        <span class="badge badge-primary">Speed : {{stats.speed}}</span>
+        <span class="badge badge-primary">Attack : {{stats.attack}}</span>
+        <span class="badge badge-primary">Defense : {{stats.defense}}</span>
+        <span class="badge badge-primary">HP : {{stats.hp}}</span>
+    </div>
+</div>
+{{/pokemons}}

@@ -1,0 +1,12 @@
+Hello {{name}}
+You have just won {{value}} dollars!
+{{#in_ca}}
+Well, {{taxed_value}} dollars, after taxes.
+{{/in_ca}}
+
+{
+"name": "Chris",
+"value": 10000,
+"taxed_value": 10000 - (10000 * 0.4),
+"in_ca": true
+}

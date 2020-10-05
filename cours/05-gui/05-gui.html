@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="fr">
+
+    <head>
+        <meta charset="utf-8">
+
+        <title>ALOM - GUI - MVC & Templating</title>
+
+        <meta name="description" content="ALOM - GUI - MVC & Templating">
+        <meta name="author" content="Julien WITTOUCK <julien@codeka.io>">
+
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+        <link rel="stylesheet" href="../css/reveal.css">
+        <link rel="stylesheet" href="../css/theme/white.css" id="theme">
+
+        <link rel="stylesheet" href="../css/miage-lille.css"/>
+
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+    </head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>ALOM</h1>
+					<h2>GUI - MVC & Templating 👨‍💻</h2>
+				</section>
+
+                <section>
+                    <h3><i class="fab fa-uber"></i> UBER</h3>
+                    <img src="images/Microservice-Architecture-Of-UBER.png" style="width: 50%"/>
+                </section>
+
+                <section>
+                    <h2><img src="images/micro-service-poke.png" style="vertical-align: middle;"/> Un micro-service c'est :</h2>
+                    <ul>
+                        <li>
+                            Un ou plusieurs canaux de communication
+                            <ul>
+                                <li>HTTP - REST/JSON</li>
+                            </ul>
+                        </li>
+                        <li>Un ensemble de fonctionnalités du même domaine métier</li>
+                        <li>Une source de données dédiée</li>
+                        <li>Un composant d'affichage</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>🔎 un micro-service Java</h2>
+                    <p>On s'appuie sur les technologies connues: les servlets !</p>
+                    <img src="images/architecture.svg"/>
+                </section>
+                <section>
+                    <h2>GUI</h2>
+                    <p>Au menu</p>
+                    <ul>
+                        <li>😠 JSP</li>
+                        <li>😧 JSTL</li>
+                        <li>🙂 Spring MVC</li>
+                        <li>😃 Moteurs de templates</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>😠 JSP</h2>
+                    <p><b>J</b>ava <b>S</b>erver <b>P</b>ages</p>
+                    <img src="images/fry.png"/>
+                </section>
+                <section>
+                    <h2>JSP</h2>
+                    <h3>Principes</h3>
+                    Page HTML embarquant du code Java
+                    <p>Compilée en servlet</p>
+                    <img src="data:image/png;base64,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" style="max-width:100%;" />
+                </section>
+                <section>
+                    <h2>JSP</h2>
+                    <h3>Développement</h3>
+                    <img src="carbon/jsp.png">
+                    <p>Relisez votre cours de CAR!</p>
+                </section>
+                <section>
+                    <h2>JSP</h2>
+                    <h3>Déploiement</h3>
+                    <p>Packaging dans un fichier ".war" 📦</p>
+                    <p>Déploiement dans un conteneur de servlets</p>
+                </section>
+                <section>
+                    <h2>😲 ouch.jsp</h2>
+                    <img src="carbon/ouch.png"/>
+                </section>
+                
+                <section>
+                    <h2>😧 JSTL</h2>
+                    <p><b>J</b>SP <b>S</b>tandard <b>T</b>ag <b>L</b>ibrary</p>
+                    <img src="images/fry.png"/>
+                </section>
+                <section>
+                    <h2>JSTL</h2>
+                    <p>Language d'expression <b>EL</b> (<b>E</b>xpression <b>L</b>anguage)</p>
+                    <img src="carbon/jsp-jstl.png"/>
+                </section>
+                <section>
+                    <h2>JSTL EL</h2>
+                    <img src="carbon/jstl-el.png"/>
+                </section>
+                <section>
+                    <h2>JSTL Taglibs</h2>
+                    <p>Balises facilitant le développement JSP. Evite le code java et minimise les balises %</p>
+                    <img src="carbon/jstl-taglibs.png" style="width: 80%;"/>
+                </section>
+
+                <section>
+                    <h2>Design Pattern MVC</h2>
+                    <p>Sépare les responsabilités (👮 SOLID)</p>
+                    <ul>
+                        <li><b>Model</b> : Contient les données</li>
+                        <li><b>View</b> : Affiche les données</li>
+                        <li><b>Controller</b> : Déclenche des actions sur les données et met à jour la vue</li>
+                    </ul>
+                    <img src="images/mvc.png"/>
+                </section>
+                <section>
+                    <h2>Design Pattern MVC</h2>
+                    <p>Déjà des pistes avec le couplage Servlet/JSP</p>
+                    <img src="images/mvc_servlet.png"/>
+                </section>
+                <section>
+                    <h2>MVC avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"/> </h2>
+                    <img src="images/mvc_spring.png"/>
+                </section>
+                <section>
+                    <h2>MVC avec <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"/> </h2>
+                    <img src="carbon/trainerController.png"/>
+                </section>
+                <section>
+                    <h2>MVC Templates</h2>
+                    <p>src/main/resources/templates/pokemons/show.html</p>
+                    <img src="carbon/template.png"/>
+                </section>
+
+                <section>
+                    <h2>Moteurs de templates</h2>
+                    <h3><a href="http://mustache.github.io/">Mustache</a> <small>(<a href="http://mustache.github.io/mustache.5.html">man-page</a>)</small></h3>
+                    <p>Logic-less templates</p>
+                    <img src="images/tom.png"/>
+                </section>
+                <section data-state="full-width">
+                    <h2>Mustache</h2>
+                    <div style="width: 70%;">
+                        <div style="float: left; width: 33%;">
+                            <p>Template</p>
+                            <img src="carbon/mustache_template.png"/>
+                        </div>
+                        <div style="float: left; width: 33%;">
+                            <p>Data</p>
+                            <img src="carbon/mustache_json.png"/>
+                        </div>
+                        <div style="float: left; width: 33%;">
+                            <p>Result</p>
+                            <img src="carbon/mustache_result.png"/>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h2>TP</h2>
+                    <img src="../images/leonidas.png"/>
+                    <p>
+                        <a href="05-tp-gui.html">GUI - MVC & Templating</a>
+                    </p>
+                </section>
+
+		</div>
+
+		<script src="../js/reveal.js"></script>
+
+		<script>
+            Reveal.initialize({
+                controls: true,
+                controlsBackArrows: 'faded',
+                progress: true,
+                history: true,
+                center: true,
+                transition: 'slide'
+            });
+		</script>
+
+        <aside class="miage_aside_logo"></aside>
+
+	</body>
+</html>

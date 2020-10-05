@@ -1,0 +1,12 @@
+<%@ taglib uri="http://java.sun.com/jstl/core" prefix="c" %>
+
+<jsp:include page="header.jsp" />
+<table>
+    <c:forEach var="pokemon" select="${trainer.team}">
+        <tr>
+            <td><c:out value="${pokemon.name}" /></td>
+            <td><c:out value="${pokemon.id}" /></td>
+        </tr>
+    </c:forEach>
+
+</table>
