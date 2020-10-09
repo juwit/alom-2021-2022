@@ -1,0 +1,20 @@
+GET /account/12345 HTTP/1.1
+Host: somebank.org
+Accept: application/json
+...
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: ...
+
+{
+    "account_number" : "12345"
+    "balance" : 100.00,
+    "currency" : "usd",
+    "links" : [
+        { "rel": "deposit", "href" : "http://somebank.org/account/12345/deposit" },
+        { "rel": "withdraw", "href" : "http://somebank.org/account/12345/withdraw" },
+        { "rel": "transfert", "href" : "http://somebank.org/account/12345/transfert" },
+        { "rel": "close", "href" : "http://somebank.org/account/12345/close" }
+    }
+}

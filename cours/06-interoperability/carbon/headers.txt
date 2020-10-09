@@ -1,0 +1,37 @@
+Accept: text/plain
+Accept: application/xml
+Accept: application/json
+Accept: application/json,text/plain
+Accept: image/png
+
+Accept-Language: en
+Accept-Language: fr
+
+Content-Type: text/html
+Content-Language: fr
+
+
+
+GET /pokemons-types/25
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+
+HTTP/1.1 200
+Content-Type: application/json;charset=UTF-8
+{
+  "id": 25,
+  "baseExperience": 112,
+  "height": 4,
+  "name": "pikachu",
+  "sprites": {
+    "back_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/25.png",
+    "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"
+  },
+  "stats": {
+    "speed": 90,
+    "defense": 40,
+    "attack": 55,
+    "hp": 35
+  },
+  "weight": 60
+}

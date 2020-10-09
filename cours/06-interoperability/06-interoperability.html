@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="fr">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>ALOM - Interoperability</title>
+
+		<meta name="description" content="ALOM - Interoperability">
+		<meta name="author" content="Julien WITTOUCK <julien@codeka.io>">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="../css/reveal.css">
+		<link rel="stylesheet" href="../css/theme/white.css" id="theme">
+
+		<link rel="stylesheet" href="../css/miage-lille.css"/>
+
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+				<section>
+					<h1>ALOM</h1>
+					<h2>🤝 Interoperabilty</h2>
+				</section>
+
+				<section>
+					<h3><i class="fab fa-uber"></i> UBER</h3>
+					<img src="images/Microservice-Architecture-Of-UBER.png" style="width: 50%"/>
+				</section>
+
+				<section>
+					<h2>Problématique</h2>
+					<ul>
+						<li>Comment communiquer avec les autres micro-services?</li>
+						<li>Comment communiquer avec les partenaires?</li>
+					</ul>
+					<img src="images/fry.png"/>
+				</section>
+
+				<section>
+					<h3>Contraintes ⛓ </h3>
+					<p>Toutes les applications ne sont pas écrites dans le même langage (Java, .Net, NodeJS, PHP, Ruby, Python...)</p>
+					<p>Les partenaires n'ont pas forcément les mêmes environnements (réseaux, firewall)</p>
+
+					<h3>Solution 🎉 </h3>
+					<p>Définition d'une norme de communication, basée sur des standards.</p>
+				</section>
+
+				<section>
+					<h4>Web services & web-sockets 🌍 </h4>
+					<ul>
+						<li>
+							Protocole HTTP(S)
+							<ul>
+								<li>Facile à implémenter (texte)</li>
+								<li>Passe les firewalls (port 80/443)</li>
+								<li>Sécurisation avec SSL/TLS 🔒 </li>
+							</ul>
+						</li>
+						<li>
+							Formats de données
+							<ul>
+								<li>SOAP : XML</li>
+								<li>REST : JSON</li>
+							</ul>
+						</li>
+						<li>
+							Contrat de service
+							<ul>
+								<li>SOAP : WSDL</li>
+								<li>REST : Swagger...</li>
+							</ul>
+						</li>
+
+					</ul>
+				</section>
+
+				<section>
+						<h2>Web services SOAP 🛁</h2>
+						<img src="images/soap.jpg">
+			</section>
+
+				<section>
+					<h2>Web services SOAP</h2>
+					<p><b>S</b>imple</p>
+					<p><b>O</b>bject</p>
+					<p><b>A</b>ccess</p>
+					<p><b>P</b>rotocol</p>
+				</section>
+
+
+				<section>
+					<h2>Web services SOAP</h2>
+					<h3>Principes architecturaux</h3>
+					<ul>
+						<li>Protocole de type RPC (Remote Procedure Call)</li>
+						<li>Représentation XML (Enveloppe, Header, Body) ✉️ </li>
+						<li>S'appuie sur HTTP, ou tout autre protocole (SMTP, JMS...)</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Web services SOAP</h2>
+					<h3>Exemple de WSDL</h3>
+					<a href="carbon/WeatherWS.xml" target="_blank">WeatherWS.xml</a>
+					<a href="carbon/weather-general.xml" target="_blank">weather-general.xsd</a>
+				</section>
+
+				<section>
+					<h2>Web services SOAP</h2>
+					<h3>Exemple de requête</h3>
+					<img src="carbon/soap-request.png"/>
+				</section>
+
+				<section>
+					<h2>Web services SOAP</h2>
+					<h3>Exemple de réponse</h3>
+					<img src="carbon/soap-response.png"/>
+				</section>
+
+				<section>
+					<h2>En Java ☕ </h2>
+					<h3>2 possiblités d'implémentation</h3>
+					<ul>
+						<li>Contract-first (top-down) ⬇️ </li>
+						<li>Code-first (bottom-up) ⬆️</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Contract-first</h2>
+					<p>Approche historique</p>
+					<p>Rédaction d'un contrat WSDL (ouch!) 💢 🤕</p>
+					<p>Récupération d'un contrat d'un partenaire</p>
+					<p>Génération d'un <b>stub</b>(client) et d'un <b>squeleton</b>(server) Java</p>
+				</section>
+
+				<section>
+					<h2>Contract-first</h2>
+					<p>
+						Génération du code avec un plugin maven:
+						<img src="carbon/jaxws-maven-plugin.png"/>
+					</p>
+				</section>
+
+				<section>
+					<h2>Code-first</h2>
+					<p>Approche plus simple 😎</p>
+					<p>Écriture des classes/interfaces Java</p>
+					<p>Génération du WSDL à partir des classes (annotations/méthodes etc...)</p>
+				</section>
+
+				<section>
+					<h2>Code-first</h2>
+					<img src="carbon/jakarta-ws-api.png" width="50%" />
+				</section>
+
+				<section>
+					<h2>Web services REST</h2>
+					<img src="images/rest.png"/>
+				</section>
+
+				<section>
+					<h2>Web services REST</h2>
+					<p><b>RE</b>presentational</p>
+					<p><b>S</b>tate</p>
+					<p><b>T</b>ransfert</p>
+				</section>
+
+				<section>
+					<h2>Web services REST</h2>
+					<h3>Principes architecturaux</h3>
+					<ul>
+						<li>Architecture découplée client/serveur</li>
+						<li>Sans état (pas de session)</li>
+						<li>
+							Accès à des ressources:
+							<ul>
+								<li>Identifiées de manière unique</li>
+								<li>Manipulées via des représentations (JSON, XML, HTML...)</li>
+								<li>Compatible avec une mise en cache</li>
+								<li>Données Hypermédia</li>
+							</ul>
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3>Négociation de contenu</h3>
+					<p>Principes au coeur du web</p>
+					<p>Le client indique au serveur ses attentes via des headers HTTP</p>
+					<img src="carbon/headers.png"/>
+				</section>
+
+				<section>
+					<h3>Négociation de contenu</h3>
+					<ul>
+						<li>Format des données : header <code>Accept</code></li>
+						<li>Traduction : header <code>Accept-Language</code></li>
+					</ul>
+					<img src="carbon/content-negociation-request.png"/>
+				</section>
+
+				<section>
+					<h3>Web services REST</h3>
+					<h4>HATEOAS : Hypermedia As The Engine Of Application State</h4>
+					<p>Le message contient les informations permettant de manipuler l'application</p>
+				</section>
+
+				<section>
+					<h4>Web services REST : Exemple XML</h4>
+					<img src="carbon/rest-xml.png"/>
+				</section>
+
+				<section>
+					<h4>Web services REST : Exemple JSON</h4>
+					<img src="carbon/rest-json.png"/>
+				</section>
+
+				<section>
+					<h2>Contrat de service REST</h2>
+					<h3><a href="https://swagger.io/" target="_blank">OpenAPI (Swagger)</a></h3>
+					<p>Description des API au format JSON ou YAML + Rendu Web + "Try It"</p>
+					<a href="carbon/pokemon-api.png" target="_blank">Pokemon API</a>
+				</section>
+
+				<section>
+					<h3><a href="http://editor.swagger.io/">Swagger</a></h3>
+					<p>Affichage de la documentation sous forme de page web</p>
+					<img src="images/swagger-hub.png"/>
+				</section>
+
+				<section>
+					<h3><a href="http://editor.swagger.io/">Swagger</a></h3>
+					<p>Génération de squelettes clients/serveur</p>
+					<img src="images/swagger-generate.png"/>
+				</section>
+
+
+				<section>
+						<p>Exposition d'un service REST Spring</p>
+						<img src="carbon/restcontroller.png" style="width: 80%"/>
+				</section>
+
+				<section>
+					<h4>En Spring</h4>
+					<p>/api/pokemon-types/{id}</p>
+					<p>/api/pokemon-types?orderBy=name</p>
+					<p>/api/pokemon-types?type=poison</p>
+					<ul>
+						<li><code>@RequestMapping</code> : écouter une URI</li>
+						<li><code>@PathVariable</code> : récupérer les variables d'URI entre '{}'</li>
+						<li><code>@RequestParam</code> : récupérer les paramètres de requête (query-strings '?a=b&c=d')</li>
+						<li><code>@RequestBody</code> : récupérer le corps de la requête</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>@RequestMapping</h2>
+					<p><code>/api/pokemon-types</code></p>
+					<img src="carbon/PokemonController-requestmapping.png"/>
+				</section>
+
+				<section>
+					<h2>@PathVariable</h2>
+					<p><code>/api/pokemon-types/{id}</code></p>
+					<img src="carbon/PokemonController-pathvariable.png"/>
+				</section>
+
+				<section>
+					<h2>@RequestParam</h2>
+					<p><code>/api/pokemon-types?orderBy=name</code></p>
+					<img src="carbon/PokemonController-requestparam.png"/>
+				</section>
+
+				<section>
+					<h2>@RequestParam</h2>
+					<p><code>/api/pokemon-types?type=poison</code></p>
+					<img src="carbon/PokemonController-requestparam-multiple.png"/>
+				</section>
+
+				<section>
+					<h2>@RequestBody</h2>
+					<p><code>POST /api/trainers</code></p>
+					<img src="carbon/TrainerController-requestbody.png"/>
+				</section>
+
+				<section>
+						<h4>Consommation REST en Spring</h4>
+						<p>RestTemplate</p>
+						<img src="carbon/resttemplate.png"/>
+				</section>
+
+				<section>
+					<h3>Spring RestTemplate</h3>
+					<p>Classe utilitaire pour effectuer des appels REST</p>
+					<ul>
+						<li>Exécute les requêtes HTTP : GET/POST/PUT/PATCH/OPTIONS/DELETE/HEAD</li>
+						<li>Utilise <code>jackson-databind</code> pour convertir les objets Java en JSON !</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Outillage</h2>
+                    <h3>💪 <code>$> curl</code></h3>
+					ou
+					<h3>Postman/Insomnia</h3>
+					<img src="images/logo-postman.png"/>
+					<img src="images/logo-insomnia.png"/>
+				</section>
+
+				<section>
+					<h2>web-sockets</h2>
+					<p>Communication client ➡️  serveur</p>
+					<p>Communication serveur ➡️  client</p>
+				</section>
+
+				<section>
+					<h2>web-sockets</h2>
+					<p>Maintient de connexion HTTP entre le client et le serveur</p>
+					<p>Mode "Push"</p>
+				</section>
+
+				<section>
+					<h2>web-sockets</h2>
+					<p>Cas d'usage</p>
+					<ul>
+						<li>Notifications</li>
+						<li>Messagerie / Dashboarding</li>
+						<li>Jeux en ligne</li>
+						<li>...</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>TP</h2>
+					<img src="../images/leonidas.png"/>
+					<p>
+						<a href="06-tp-interoperability.html">Interoperability</a>
+					</p>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="../js/reveal.js"></script>
+
+		<script>
+			Reveal.initialize({
+				controls: true,
+                controlsBackArrows: 'faded',
+				progress: true,
+				history: true,
+				center: true,
+				transition: 'slide'
+			});
+
+		</script>
+
+		<aside class="miage_aside_logo"></aside>
+
+    </body>
+</html>

@@ -1,0 +1,18 @@
+GET /account/12345 HTTP/1.1
+Host: somebank.org
+Accept: application/xml
+...
+
+HTTP/1.1 200 OK
+Content-Type: application/xml
+Content-Length: ...
+
+<?xml version="1.0"?>
+<account>
+    <account_number>12345</account_number>
+    <balance currency="usd">100.00</balance>
+    <link rel="deposit" href="http://somebank.org/account/12345/deposit" />
+    <link rel="withdraw" href="http://somebank.org/account/12345/withdraw" />
+    <link rel="transfer" href="http://somebank.org/account/12345/transfer" />
+    <link rel="close" href="http://somebank.org/account/12345/close" />
+</account>
