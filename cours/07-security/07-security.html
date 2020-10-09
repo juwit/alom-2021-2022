@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="fr">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>ALOM - Security</title>
+
+		<meta name="description" content="ALOM - Security">
+		<meta name="author" content="Julien WITTOUCK <julien@codeka.io>">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="../css/reveal.css">
+		<link rel="stylesheet" href="../css/theme/white.css" id="theme">
+
+		<link rel="stylesheet" href="../css/miage-lille.css"/>
+
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+				<section>
+					<h1>ALOM</h1>
+					<h2>🔒 Security</h2>
+				</section>
+
+				<section>
+					<h3><i class="fab fa-uber"></i> UBER</h3>
+					<img src="images/Microservice-Architecture-Of-UBER.png" style="width: 50%"/>
+				</section>
+
+				<section>
+					<h2>🤔 Problématiques : </h2>
+					<ul>
+						<li>Comment sécuriser les données ?</li>
+						<li>Comment authentifier les utilisateurs ?</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>🎚️ Niveaux de sécurité</h2>
+					<ul>
+						<li>Physique : Contrôle d'accès, biométrie</li>
+						<li>Hardware : Encryption des disques</li>
+						<li>Middleware : Firewalls (blocage d'IP/Ports), VPN (réseaux privés virtuels)</li>
+						<li>Software : Authentification/Autorisation</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>HTTPS</h2>
+					<p>HTTPS fournit un tunnel de communications sécurisé</p>
+					<p>Encryption des données via un algorithme asymétrique</p>
+					<p>Certificat validant l'identité du site + clé publique</p>
+				</section>
+				<section>
+					<h2>HTTPS</h2>
+					<img src="images/https.png"/>
+				</section>
+				<section>
+					<h2>⚠️  HTTPS</h2>
+					<ul>
+						<li>Encrypte les données entre le client et le serveur</li>
+						<li>Ne permet pas de valider l'identité de l'utilisateur</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Software Security</h2>
+					<ul>
+						<li>Authentication (authentification)</li>
+						<li>Authorization (autorisation)</li>
+					</ul>
+				</section>
+				<section>
+					<h4>Authentication</h4>
+					<p><i class="far fa-user fa-2x"></i> <i class="far fa-id-card fa-2x"></i></p>
+					<p>Vérification de l'identité d'un "principal" (un user, un device, un système qui veut effectuer une action)</p>
+				</section>
+				<section>
+					<h4>Authorization</h4>
+					<p><i class="fas fa-unlock-alt fa-2x"></i> <i class="fas fa-check fa-2x"></i></p>
+					<p>Décider si un "principal" peut faire une action en particulier. (contrôle d'accès)</p>
+				</section>
+
+				<section>
+					<h4>Authentification en HTTP</h4>
+					<p>Utilisation du header </p>
+					<p><code>Authorization: &lt;type&gt; &lt;credentials&gt;</code></p>
+					<p><code>Authorization: Basic QXNoOnBhc3N3b3Jk</code></p>
+				</section>
+
+				<section>
+					<h4>Authentification en HTTP</h4>
+					<p><code>Authorization: Basic QXNoOnBhc3N3b3Jk</code></p>
+					<p>Les logins/mots de passe (ou tokens) transitent dans les headers</p>
+					<p>C'est pour ça que l'on doit utiliser HTTPS !</p>
+				</section>
+
+				<section>
+					<h4>En servlets</h4>
+					<p>Utilisation des servlet filters</p>
+					<img src="images/servlet-filters.png"/>
+				</section>
+
+				<section>
+					<h4>En <img src="images/spring-by-pivotal.png" style="height: 1.5em; vertical-align: middle;"></h4>
+					<h5>spring-security</h5>
+					<ul>
+						<li>Authentification (validation des credentials)</li>
+						<li>Utilisation d'un Cookie HTTP pour identifiant de session</li>
+						<li>Stockage de "principal" en session côté serveur</li>
+						<li>Logout : suppression de la session</li>
+						<li>Protection contre le vol de session (CSRF & Session Fixation)</li>
+						<li>Protection contre les appels venant de sources inconnues (CORS)</li>
+					</ul>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<img src="carbon/spring-security.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<img src="carbon/websecurityconfig.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Configuration des routes protégées</p>
+					<img src="carbon/websecurityconfig-configure.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Récupération des utilisateurs via un <code>UserDetailsService</code></p>
+					<img src="carbon/websecurityconfig-userdetailsservice.png" style="width: 70%;"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Page de login</p>
+					<img src="carbon/login.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p><code>UserDetailsService</code> spécifique</p>
+					<p>ℹ️ On peut appeler un autre service !</p>
+					<img src="carbon/websecurityconfig-customuserdetailsservice.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Accès à l'utilisateur loggué</p>
+					<p>Injection du <code>Principal</code></p>
+					<img src="carbon/getPrincipal-parameter.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Accès à l'utilisateur loggué</p>
+					<p>Accès au <code>SecurityContextHolder</code></p>
+					<img src="carbon/getprincipal-securitycontextholder.png"/>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Sécurisation des services REST</p>
+					<p>Le simple fait d'ajouter spring security au classpath sécurise toutes les routes d'une application et ajoute une page de login par défaut.</p>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Sécurisation des services REST par défaut</p>
+					<ul>
+						<li>Username : <code>user</code></li>
+						<li>Password : loggué sur la console</li>
+					</ul>
+					<code>Using generated security password: 112eb169-1567-42fe-bf0e-7c7bc94a5afa</code>
+				</section>
+
+				<section>
+					<h4>spring-security</h4>
+					<p>Personalisation de la sécurisation des services REST</p>
+					<ul>
+						<li>Username : <code>spring.security.user.name</code></li>
+						<li>Password : <code>spring.security.user.password</code></li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>TP</h2>
+					<img src="../images/leonidas.png"/>
+					<p>
+						<a href="./07-tp-security.html">Security 🔒</a>
+					</p>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="../js/reveal.js"></script>
+
+		<script>
+			Reveal.initialize({
+				controls: true,
+                controlsBackArrows: 'faded',
+				progress: true,
+				history: true,
+				center: true,
+				transition: 'slide'
+			});
+
+		</script>
+
+		<aside class="miage_aside_logo"></aside>
+
+    </body>
+</html>

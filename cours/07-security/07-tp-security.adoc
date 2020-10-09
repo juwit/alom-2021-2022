@@ -1,0 +1,838 @@
+:source-highlighter: pygments
+:prewrap!:
+
+:icons: font
+
+:toc: left
+:toclevels: 4
+
+:linkattrs:
+
+:sectlinks:
+:sectanchors:
+:sectnums:
+
+:experimental:
+
+:stem:
+
+= ALOM - TP 7 - Security
+
+== Présentation et objectifs
+
+Le but est de continuer le développement de notre architecture "à la microservice".
+
+Nous allons aujourd'hui sécuriser les accès à nos API et à notre application !
+
+[TIP]
+Pendant ce TP, nous faisons évoluer les TP précédents !
+
+[TIP]
+Nous ne sécuriserons pas l'accès à l'API `pokemon-type`, étant donné que cette API ne présente pas de données sensibles !
+
+== Sécuriser trainer-api
+
+Nous allons commencer par sécuriser l'API `trainers`.
+
+=== spring-security
+
+Configurez `spring-security` dans le `pom.xml` de votre API trainers.
+
+[source,xml]
+.pom.xml
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+----
+
+Démarrez votre API.
+
+Vous devriez voir des ligne de logs supplémentaire apparaître :
+
+[source,bash]
+----
+INFO --- [main] .s.s.UserDetailsServiceAutoConfiguration :
+
+Using generated security password: 336470fd-a4be-474e-9e1a-84359f8b3808 <1>
+
+<2>
+INFO --- [main] o.s.s.web.DefaultSecurityFilterChain    : Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@45cf0c15, org.springframework.security.web.context.SecurityContextPersistenceFilter@becb93a, org.springframework.security.web.header.HeaderWriterFilter@723b8eff, org.springframework.security.web.csrf.CsrfFilter@1fec9d33, org.springframework.security.web.authentication.logout.LogoutFilter@7852ab30, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@508b4f70, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@5e9f1a4c, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@2f2dc407, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@67ceaa9, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@1d1fd2aa, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@65a2e14e, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@c96c497, org.springframework.security.web.session.SessionManagementFilter@20d65767, org.springframework.security.web.access.ExceptionTranslationFilter@39840986, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@42fa5cb]
+----
+<1> Le mot de passe généré par défaut !
+<2> On voit également que Spring a décidé de filtrer l'ensemble des requêtes !
+
+=== Configurer un user et un mot de passe
+
+Modifiez votre fichier `application.properties` pour changer le mot de passe par défaut.
+
+En effet, ce mot de passe par défaut est différent à chaque redémarrage de notre API. Ce qui n'est pas très pratique pour nos consommateurs !
+
+[TIP]
+====
+Vous pouvez générer un mot de passe par défaut en utilisant un UUID (c'est ce que fait Spring).
+
+Si vous êtes sous linux, vous pouvez utiliser la commande `uuidgen`.
+
+Sinon, vous pouvez utiliser un générateur en ligne, par exemple : https://www.uuidgenerator.net/
+====
+
+[source]
+.application.properties
+----
+spring.security.user.name=user
+spring.security.user.password=<votre-uuid>
+----
+
+=== Votre collection Postman
+
+Vos requêtes Postman doivent maintenant renvoyer des erreurs de ce type :
+
+[source,javascript]
+----
+{
+    "timestamp": "2019-03-08T09:39:51.720+0000",
+    "status": 401,
+    "error": "Unauthorized",
+    "message": "Unauthorized",
+    "path": "/trainers"
+}
+----
+
+Configurez votre collection Postman pour utiliser l'authentification `Basic`.
+Pour ce faire, vous pouvez directement ajouter l'authentification au niveau de la collection :
+
+image::images/postman-edit-collection.png[]
+
+image::images/postman-edit-collection-authorization.png[]
+
+[TIP]
+Pour info, vous pouvez aussi constater que spring-security génère une page de login par défaut, si vous allez voir
+sur l'url de votre api avec un browser classique http://localhost:8081[,window="_blank"] !
+
+=== Impact sur les tests d'intégration
+
+Nos tests d'intégration du TrainerController doivent également être impactés. Ces tests supposaient que l'API n'était pas authentifiée.
+
+Si vous les exécutez, vous devriez voir des logs de ce type :
+
+[source,bash]
+----
+DEBUG XXX --- [main] o.s.web.client.RestTemplate : Response 401 UNAUTHORIZED
+DEBUG XXX --- [main] o.s.web.client.RestTemplate : Reading to [com.miage.alom.tp.trainer_api.bo.Trainer]
+----
+
+Le `TestRestTemplate` de spring contient une méthode `withBasicAuth`, qui permet de facilement passer un couple d'identifiants à utiliser sur la requête.
+
+Pour impacter votre test d'intégration, vous devez donc :
+
+* recevoir en injection de dépendance le `user` de votre API
+* recevoir en injection de dépendance le `password` de votre API
+* passer le `user` et `password` au `TestRestTemplate`
+
+[source,java,linenums]
+.TrainerControllerIntegrationTest.java
+----
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class TrainerControllerIntegrationTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private TrainerController controller;
+
+    @Value("") //<1>
+    private String username;
+
+    //<2>
+    private String password;
+
+    @Test //<3>
+    void getTrainers_shouldThrowAnUnauthorized(){
+        var responseEntity = this.restTemplate
+                .getForEntity("http://localhost:" + port + "/trainers/Ash", Trainer.class);
+        assertNotNull(responseEntity);
+        assertEquals(401, responseEntity.getStatusCodeValue());
+    }
+
+    @Test //<4>
+    void getTrainer_withNameAsh_shouldReturnAsh() {
+        var ash = this.restTemplate
+                .withBasicAuth(username, password) //<4>
+                .getForObject("http://localhost:" + port + "/trainers/Ash", Trainer.class);
+
+        assertNotNull(ash);
+        assertEquals("Ash", ash.getName());
+        assertEquals(1, ash.getTeam().size());
+
+        assertEquals(25, ash.getTeam().get(0).getPokemonType());
+        assertEquals(18, ash.getTeam().get(0).getLevel());
+    }
+
+}
+----
+<1> Injectez votre properties représentant le user ici
+<2> Injectez votre properties de mot de passe ici
+<3> Ce test permet de valider que l'API est sécurisée
+<4> Modifiez les autres tests pour ajouter l'authentification
+
+=== Le cas des POST / PUT / DELETE - CSRF & CORS
+
+Par défaut, spring-security gère une sécurité de type CSRF (Cross-Site-Request-Forgery).
+Cette mécanique permet de s'assurer qu'une requête qui modifie des données `POST/PUT/DELETE` ne peut pas provenir d'un site tiers.
+
+==== Exemple d'attaque CSRF
+
+[NOTE]
+Cette partie n'est qu'informative, pour expliquer comment un pirate pourrait utiliser une API de manière malicieuse.
+Vous n'avez rien à implémenter ici.
+
+Sur un site web malicieux, un pirate crée un formulaire, par exemple :
+
+[source,html]
+.www.pirate-moi.fr
+----
+<form action="https://bank.example.com/transfer" method="post">
+<input type="hidden"
+    name="amount"
+    value="100.00"/>
+<input type="hidden"
+    name="account"
+    value="evilsAccountNumber"/>
+<input type="submit"
+    value="Win Money!"/>
+</form>
+----
+
+[source,text]
+.La requête émise
+----
+POST /transfer HTTP/1.1
+Host: bank.example.com
+Content-Type: application/x-www-form-urlencoded
+
+amount=100.00&account=9876
+----
+
+Ce petit formulaire affiche un bouton "Win Money!" aux utilisateur, mais en vrai exécute un `POST` sur une banque, en effectuant un virement sur le compte du pirate !
+
+Le service web de la banque n'est pas capable de faire la différence entre une requête émise par son site web, ou par un site web pirate !
+
+Le pirate effectue ensuite une simple attaque de type phishing pour transmettre un lien vers votre page et le tour est joué.
+
+Pour se prémunir de ce genre de cas, 2 parades sont à prévoir :
+
+* CORS : Cross-Origin-Resource-Sharing : Le browser ne transmet la requête au serveur que s'il est dans la même origine.
+Ici, les requêtes sont émises depuis un site dont l'origine est \http://www.pirate-moi.fr. Les browser refusent par défaut ce type de requête (ouf !).
+* Synchronizer Token Pattern : Pour s'assurer que le formulaire est bien envoyé par une application qui en a le droit, un token est créé sur les pages du site web.
+Ce token permet de valider la requête côté serveur. Le but est bien de s'assurer que le pirate ne peut pas disposer de token valide sur son site.
+
+Avec ce token, les requêtes émises doivent donc ressembler à cela :
+
+[source,text]
+.La requête émise avec le token
+----
+POST /transfer HTTP/1.1
+Host: bank.example.com
+Content-Type: application/x-www-form-urlencoded
+
+amount=100.00&account=9876&_csrf=<secure-random>
+----
+
+Lorsque nous allons modifier notre IHM, nous devrons intégrer dans nos formulaires la gestion de ce token.
+Pour l'instant, notre API n'étant consommée que par notre IHM, nous pouvons désactiver cette sécurité.
+
+[CAUTION]
+Ne désactivez cette sécurité uniquement si votre API n'est pas accessible directement !
+
+[CAUTION]
+Attention, ne faites pas ça en entreprise sans la validation d'un responsable sécurité !
+
+[TIP]
+En général, les API ne sont jamais consommées en direct, et donc jamais exposées sur le web. Dans ce cas, il est acceptable de désactiver cette sécurité.
+
+==== Désactivation du CSRF
+
+Pour configurer spring-security, nous devons implémenter la classe suivante :
+
+[source,java,linenums]
+.SecurityConfig.java
+----
+package com.miage.alom.tp.trainer_api.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+@Configuration //<1>
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override //<2>
+    protected void configure(HttpSecurity http) throws Exception {
+        super.configure(http); //<3>
+        http.csrf().disable(); //<4>
+    }
+}
+----
+<1> Nous créons une classe de configuration. Cette classe hérite de `WebSecurityConfigurerAdapter` pour faciliter la configuration
+<2> Nous surchargeons la méthode `configure`
+<3> Nous appelons la méthode parente (pour bénéficier de la configuration par défaut)
+<4> Nous désactivons la protection CSRF sur notre API
+
+Une fois cette classe implémentée, les tests d'intégration, ainsi que les requêtes Postman `POST/PUT/DELETE` devraient fonctionner !
+
+== Impacts sur `game-ui`
+
+Maintenant que votre API de Trainers est sécurisée, il faut également reporter la sécurisation dans les services qui la consomment.
+En particulier sur le `game-ui`.
+
+=== Sécurisation des appels à `trainer-api`
+
+==== application.properties
+
+Commençons par copier le `username`/`password` qui nous permet d'appeler `trainer-api` dans les properties de `game-ui`
+
+[source,properties]
+.application.properties
+----
+trainer.service.url=http://localhost:8081
+trainer.service.username=user
+trainer.service.password=<votre password>
+----
+
+==== Le(s) RestTemplate(s)
+
+Nous devons également modifier notre usage du `RestTemplate` pour utiliser l'authentification.
+
+Une manière simple et efficace est d'utiliser un `intercepteur`, qui va s'exécuter à chaque requête émise par le `RestTemplate`
+et ajouter les headers http nécessaire !
+
+[TIP]
+Hé ! On pourrait faire pareil pour transmettre la `Locale` de notre utilisateur !
+
+Modifiez votre classe RestConfiguration pour utiliser un intercepteur
+
+===== Le test unitaire
+
+[source,java,linenums]
+.com.miage.alom.tp.game_ui.config.RestConfigurationTest.java
+----
+package com.miage.alom.tp.game_ui.config;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.http.client.support.BasicAuthenticationInterceptor;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class RestConfigurationTest {
+
+    @Test
+    void restTemplate_shouldExist() {
+        var restTemplate = new RestConfiguration().restTemplate();
+
+        assertNotNull(restTemplate);
+    }
+
+    @Test
+    void trainerApiRestTemplate_shouldHaveBasicAuth() {
+        var restTemplate = new RestConfiguration().trainerApiRestTemplate();
+
+        assertNotNull(restTemplate);
+
+        var interceptors = restTemplate.getInterceptors();
+        assertNotNull(interceptors);
+        assertEquals(1, interceptors.size());
+
+        var interceptor = interceptors.get(0);
+        assertNotNull(interceptor);
+
+        assertEquals(BasicAuthenticationInterceptor.class, interceptor.getClass());
+    }
+}
+----
+
+==== L'implémentation
+
+Modifiez la classe `RestConfiguration` pour passer les tests unitaires.
+
+[source,java,linenums]
+.RestConfiguration.java
+----
+@Configuration
+public class RestConfiguration {
+
+    // <1>
+
+    @Bean
+    RestTemplate trainerApiRestTemplate(){ // <2>
+        // TODO
+    }
+
+    @Bean
+    RestTemplate restTemplate(){
+        return new RestTemplate();
+    }
+}
+----
+<1> Utilisez l'injection de dépendance pour charger le user et password de l'API Trainers
+<2> Construisez un `RestTemplate` avec un intercepteur `BasicAuthenticationInterceptor`.
+
+==== Utilisation du bon `RestTemplate`
+
+Maintenant, notre `game-ui` possède deux `RestTemplate`. Un utilisant l'authentification pour `trainer-api`, et l'autre sans, pour `pokemon-type-api`.
+Il faut indiquer à spring quel `RestTemplate` sélectionner lorsqu'il fait l'injection de dépendances dans le `TrainerServiceImpl`.
+
+Cela se fait à l'aide de l'annotation `@Qualifier`.
+
+Modifiez votre injection de dépendance dans le `TrainerServiceImpl` :
+
+[source,java,linenums]
+.TrainerServiceImpl.java
+----
+@Autowired
+@Qualifier("trainerApiRestTemplate") // <1>
+void setRestTemplate(RestTemplate restTemplate) {
+    this.restTemplate = restTemplate;
+}
+----
+<1> Qualifier prend en paramètre le nom du bean à injecter. Le nom de notre `RestTemplate` est le nom de la méthode qui l'a instancié dans notre `RestConfiguration`
+
+== Sécuriser `game-ui`
+
+Nous allons maintenant utiliser une authentification login/mot de passe sur l'ensemble de notre application !
+Les login/mot de passe seront ceux de nos dresseurs de pokemon gérés par `trainer-api`.
+
+=== Gestion du mot de passe dans `trainer-api`
+
+Nous allons commencer par créer un champ "password" dans la `trainer-api`.
+Ce champ contiendra le mot de passe du dresseur encrypté avec BCrypt.
+
+NOTE: BCrypt est un algorithme de hash, comme MD5 ou SHA-1/SHA-256.
+
+[source,java,linenums]
+.Trainer.java
+----
+package com.miage.alom.tp.trainer_api.bo;
+
+import javax.persistence.*;
+import java.util.List;
+
+@Entity
+public class Trainer {
+
+    [...]
+
+    @Column //<1>
+    private String password;
+
+    [...]
+
+    //<2>
+    public String getPassword() {
+    }
+
+    public void setPassword(String password) {
+    }
+}
+----
+<1> On ajoute un nouveau champ `password`
+<2> On n'oublie pas les Getters/Setters
+
+[WARNING]
+====
+Les mots de passe doivent toujours être cryptés en base de données.
+Ne stockez jamais de mots de passe clair.
+====
+
+Nous allons également alimenter nos deux dresseurs iconiques avec des mots de passe par défaut.
+Pour ce faire, nous modifions la classe principale de notre API :
+
+[source,java,linenums]
+.TrainerApi.java
+----
+@Bean
+@Autowired
+public CommandLineRunner demo(TrainerRepository repository) {
+    BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(); //<1>
+
+    return (args) -> {
+        var ash = new Trainer("Ash");
+        var pikachu = new Pokemon(25, 18);
+        ash.setTeam(List.of(pikachu));
+        ash.setPassword(bCryptPasswordEncoder.encode("ash_password")); //<2>
+
+        var misty = new Trainer("Misty");
+        var staryu = new Pokemon(120, 18);
+        var starmie = new Pokemon(121, 21);
+        misty.setTeam(List.of(staryu, starmie));
+        misty.setPassword(bCryptPasswordEncoder.encode("misty_password")); //<2>
+
+        // save a couple of trainers
+        repository.save(ash);
+        repository.save(misty);
+    };
+}
+----
+<1> On utilise un BCryptPasswordEncoder, qui est une des classes fournies par spring-security
+<2> On l'utilise pour encrypter les mots de passe de nos dresseurs !
+
+[NOTE]
+====
+L'algorithme de hashage BCrypt utilise un "sel" de hashage (valeur unique à chaque utilisation), et un "cost" (nombre de boucles d'itérations pour le hashage), ce qui le rend particulièrement robuste (et coûteux à l'exécution).
+
+Cela implique qu'un mot de passe hashé deux fois, aura une valeur de hashage différente (grace au "sel").
+
+Cela nous prémunit des attaques de type "rainbow table/reverse table", qui consiste à calculer de nombreuses valeurs de hashage pour des mots de passe, et donc en ayant accès à un mot de passe hashé, de pouvoir retrouver sa valeur en clair.
+====
+
+Vous devriez voir les mots de passe cryptés lors des appels à votre API !
+
+[source,javascript]
+----
+{
+    "name": "Ash",
+    "team": [
+        {
+            "id": 1,
+            "pokemonType": 25,
+            "level": 18
+        }
+    ],
+    "password": "$2a$10$NIDVYQO574l/.8sTdAhEeuc/GW/aKNN5w1eLjg3kr4Oh2u7dFIowC"
+}
+----
+
+=== Récupération du mot de passe dans `game-ui`
+
+Le mot de passe doit également être récupéré dans `game-ui`.
+
+Ajoutez le champ `password` à la classe `Trainer` de votre `game-ui`, ainsi que les getter/setter nécessaires.
+
+=== Configuration de spring-security
+
+Commençons par ajouter spring-security au `pom.xml` de `game-ui`.
+
+[source,xml]
+.pom.xml
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+----
+
+Ouvrez l'url de votre IHM : http://localhost:9000[,window="_blank"].
+
+Vous devriez tomber sur une page de login !
+
+.La page de login par défaut de spring-security !
+image::images/login-page.png[]
+
+TIP: Pour rappel, le user par défaut de spring-security est `user` et le mot de passe par défaut apparaît dans les logs !
+
+=== Personnalisation de spring-security
+
+Nous ne voulons pas utiliser un login par défaut, mais bien se logguer avec les comptes de dresseurs de pokémon gérés dans `trainer-api`.
+
+Nous devons donc personnaliser un peu la configuration de spring-security !
+
+==== Le test unitaire
+
+Implémentez le test unitaire suivant :
+
+[source,java,linenums]
+.SecurityConfigTest.java
+----
+package com.miage.alom.tp.game_ui.config;
+
+import com.miage.alom.tp.game_ui.trainers.bo.Trainer;
+import com.miage.alom.tp.game_ui.trainers.service.TrainerService;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class SecurityConfigTest {
+
+    @Test
+    void securityConfig_shouldExtendWebSecurityConfigurerAdapter(){
+        assertTrue(WebSecurityConfigurerAdapter.class.isAssignableFrom(SecurityConfig.class));
+    }
+
+    @Test
+    void passwordEncoder_shouldBeBCryptPasswordEncoder() {
+        var securityConfig = new SecurityConfig();
+        var passwordEncoder = securityConfig.passwordEncoder();
+        assertNotNull(passwordEncoder);
+        assertEquals(BCryptPasswordEncoder.class, passwordEncoder.getClass());
+    }
+
+    @Test
+    void userDetailsService_shouldUseTrainerService() {
+        var securityConfig = new SecurityConfig();
+
+        var trainerService = mock(TrainerService.class);
+        var trainer = new Trainer();
+        trainer.setName("Garry");
+        trainer.setPassword("secret");
+        when(trainerService.getTrainer("Garry")).thenReturn(trainer);
+
+        securityConfig.setTrainerService(trainerService);
+
+        var userDetailsService = securityConfig.userDetailsService();
+
+        var garry = userDetailsService.loadUserByUsername("Garry");
+
+        // mock should be called
+        verify(trainerService).getTrainer("Garry");
+
+        assertNotNull(garry);
+        assertEquals("Garry", garry.getUsername());
+        assertEquals("secret", garry.getPassword());
+        assertTrue(garry.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")));
+    }
+
+    @Test
+    void userDetailsService_shouldThrowABadCredentialsException_whenUserDoesntExists() {
+        var securityConfig = new SecurityConfig();
+
+        // the mock returns null
+        var trainerService = mock(TrainerService.class);
+        securityConfig.setTrainerService(trainerService);
+
+        var userDetailsService = securityConfig.userDetailsService();
+
+        var exception = assertThrows(BadCredentialsException.class, () -> userDetailsService.loadUserByUsername("Garry"));
+        assertEquals("No such user", exception.getMessage());
+
+        // mock should be called
+        verify(trainerService).getTrainer("Garry");
+    }
+
+}
+----
+
+==== L'implémentation
+
+Implémentez la classe `SecurityConfig` :
+
+[source,java,linenums]
+.SecurityConfig.java
+----
+package com.miage.alom.tp.game_ui.config;
+
+//<1>
+public class SecurityConfig {
+
+    //<2>
+
+    //<3> <5>
+    PasswordEncoder passwordEncoder(){
+    }
+
+    //<4> <5>
+    public UserDetailsService userDetailsService() {
+    }
+}
+----
+<1> Cette classe est une `@Configuration` et doit hériter de `WebSecurityConfigurerAdapter`
+<2> Il nous faut probablement un `TrainerService` pour récupérer nos dresseurs
+<3> Le password encoder est en BCrypt
+<4> Le `UserDetailsService` doit appeler le `TrainerService` pour récupérer ses objets. On peut faire une classe interne, ou même une lambda !
+<5> Il faut indiquer à Spring de charger ces deux méthodes. Ajoutez l'annotation `@Bean` sur ces méthodes.
+
+Une fois tout cela implémenté, allez faire un tour sur votre IHM http://localhost:9000[,window="_blank"], vous devriez pouvoir vous connecter
+avec les nom de dresseurs et leur mot de passe !
+
+=== La page "Mon Profil"
+
+NOTE: Cette partie est moins guidée. Reportez vous au cours !
+
+Nous souhaitons créer une page "Mon profil" pour nos dresseurs de Pokemon.
+
+Sur cette page, ils pourraient lister leurs pokemons, et pourquoi pas changer leur identifiants et mot de passe !
+
+Cette page pourrait être disponible à l'url http://localhost:9000/profile[,window="_blank"] et ressembler à ça :
+
+.La page profil de Sacha
+image::images/ash_profile.png[]
+
+==== Le controlleur
+
+Développez un controller `ProfileController` ou bien ajoutez la gestion de l'URL `/profile` dans le `TrainerController`.
+
+Il serait pratique de pouvoir identifier quel est l'utilisateur connecté pour afficher ses informations !
+Utilisez le `SecurityContextHolder` pour récupérer le `Principal` connecté, ou bien récupérez le `Principal`
+en injection de dépendance (paramètre de méthode de controlleur).
+
+==== Le `TrainerService`
+
+La méthode `getAllTrainers` pourrait simplement renvoyer les dresseurs différents du dresseur connecté !
+La page Trainers ressemblerait donc, pour Sacha à :
+
+.La page Trainers vue par Sacha
+image::images/trainers_page.png[]
+
+=== Impacts sur l'IHM avec Mustache
+
+Nous pouvons également utiliser Mustache pour impacter l'IHM de notre application.
+
+==== Le `ControllerAdvice` et `ModelAttribute`
+
+`ControllerAdvice` est une annotation de Spring, permettant à des méthodes d'être partagées dans l'ensemble des controlleurs.
+C'est plus propre que de faire de l'héritage :)
+
+L'annotation `@ModelAttribute` permet de déclarer une valeur comme étant systématiquement ajoutée au `Model` ou `ModelAndView` de spring-mvc, sans avoir à le faire manuellement dans une méthode de controller.
+
+===== Le test unitaire
+
+Implémentez le test unitaire suivant:
+
+[source,java,linenums]
+.com.miage.alom.tp.game_ui.controller.SecurityControllerAdviceTest.java
+----
+package com.miage.alom.tp.game_ui.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class SecurityControllerAdviceTest {
+
+    @Test
+    void securityControllerAdvice_shouldBeAControllerAdvice() {
+        assertNotNull(SecurityControllerAdvice.class.getAnnotation(ControllerAdvice.class));
+    }
+
+    @Test
+    void principal_shouldUseModelAttribute() throws NoSuchMethodException {
+        var principalMethod = SecurityControllerAdvice.class.getDeclaredMethod("principal");
+        var annotation = principalMethod.getAnnotation(ModelAttribute.class);
+        assertNotNull(annotation);
+        assertEquals("user", annotation.value());
+    }
+
+    @Test
+    void principal_shouldAddThePrincipalToTheModel() throws NoSuchMethodException {
+        var advice = new SecurityControllerAdvice();
+
+        // mocking data
+        var authentication = mock(Authentication.class);
+        var user = mock(User.class);
+        when(authentication.getPrincipal()).thenReturn(user);
+
+        // setting security to the mocked auth !
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        var result = advice.principal();
+        assertEquals(user, result);
+    }
+
+}
+----
+
+===== L'implémentation
+
+Implémentez le `SecurityControllerAdvice`
+
+[source,java,linenums]
+.SecurityControllerAdvice.java
+----
+package com.miage.alom.tp.game_ui.controller;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import java.security.Principal;
+
+//<1>
+public class SecurityControllerAdvice {
+
+    //<2>
+    Object principal(){
+        //<3>
+    }
+
+}
+----
+<1> Utilisez l'annotation `@ControllerAdvice`
+<2> Cette méthode doit utiliser `@ModelAttribute`
+<3> Retournez le `Principal` connecté
+
+==== Utilisation
+
+Ajoutez la property suivante dans votre `application.properties`:
+
+[source]
+.application.properties
+----
+spring.mustache.expose-request-attributes=true
+----
+
+Cette property permet à Mustache de récupérer des attributs de requête dans le `Model` spring.
+En particulier le token `CSRF` dont nous aurons besoin pour tous les formulaires dans notre application.
+
+Vous pouvez créer une barre de navigation pour votre application, qui affiche le nom de l'utilisateur connecté, ainsi qu'un bouton pour se déconnecter:
+
+[source,html,linenums]
+.navbar.html (ici en bootstrap, utilisez le framework CSS que vous préférez !)
+----
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="pokedex">
+                <img src="/icons/pokedex.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Pokedex
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="trainers">
+                <img src="/icons/player.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Trainers
+            </a>
+        </li>
+    </ul>
+
+    {{#user}}
+    <span class="navbar-text mr-md-3">Welcome {{username}}</span>
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" href="profile">
+                <img src="/icons/player.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                My Profile
+            </a>
+        </li>
+    </ul>
+    <form class="form-inline" action="/logout" method="post">
+        <input type="submit" class="btn btn-outline-warning my-2 my-sm-0" value="Sign Out"/>
+        <input type="hidden" name="{{_csrf.parameterName}}" value="{{_csrf.token}}"/>
+    </form>
+    {{/user}}
+</nav>
+----
+
+== Pour aller plus loin
+
+* implémentez le changement de mot de passe d'un dresseur de pokemons
+* implémentez une page d'inscription au jeu (vous pouvez réutiliser la page 'register' du TP 5 comme point de départ)
+* implémentez sur la page profil un moyen d'ajouter ou de supprimer des pokemons de l'équipe du dresseur
