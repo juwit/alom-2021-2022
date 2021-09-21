@@ -610,13 +610,28 @@ Nous allons réécrire le TP "Handcrafting" en utilisant Spring !</p>
 </tr>
 </table>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Le code de ce TP est en Java 17 !
+Mettez à jour votre JDK (ou faites de simples classes à la place des <code>record</code>)</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_github"><a class="anchor" href="#_github"></a><a class="link" href="#_github">2. Github</a></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Identifiez vous sur Github, et cliquez sur le lien suivant pour créer votre repository git: <a href="https://classroom.github.com/a/muEZu82F" target="_blank" rel="noopener">Github classroom</a></p>
+<p>Identifiez vous sur Github, et cliquez sur le lien suivant pour créer votre repository git: <a href="https://classroom.github.com/a/_tVnnj4M" target="_blank" rel="noopener">Github classroom</a></p>
 </div>
 <div class="paragraph">
 <p>Clonez ensuite votre repository git sur votre poste !</p>
@@ -709,8 +724,8 @@ $ mkdir -p src/<span class="tok-o">{</span>main,test<span class="tok-o">}</span>
     <span class="tok-nt">&lt;packaging&gt;</span>jar<span class="tok-nt">&lt;/packaging&gt;</span> <i class="conum" data-value="1"></i><b>(1)</b>
 
     <span class="tok-nt">&lt;properties&gt;</span>
-        <span class="tok-nt">&lt;maven.compiler.source&gt;</span>11<span class="tok-nt">&lt;/maven.compiler.source&gt;</span> <i class="conum" data-value="2"></i><b>(2)</b>
-        <span class="tok-nt">&lt;maven.compiler.target&gt;</span>11<span class="tok-nt">&lt;/maven.compiler.target&gt;</span> <i class="conum" data-value="3"></i><b>(3)</b>
+        <span class="tok-nt">&lt;maven.compiler.source&gt;</span>17<span class="tok-nt">&lt;/maven.compiler.source&gt;</span> <i class="conum" data-value="2"></i><b>(2)</b>
+        <span class="tok-nt">&lt;maven.compiler.target&gt;</span>17<span class="tok-nt">&lt;/maven.compiler.target&gt;</span> <i class="conum" data-value="3"></i><b>(3)</b>
     <span class="tok-nt">&lt;/properties&gt;</span>
 
     <span class="tok-nt">&lt;dependencies&gt;</span>
@@ -719,19 +734,19 @@ $ mkdir -p src/<span class="tok-o">{</span>main,test<span class="tok-o">}</span>
         <span class="tok-nt">&lt;dependency&gt;</span>
             <span class="tok-nt">&lt;groupId&gt;</span>org.junit.jupiter<span class="tok-nt">&lt;/groupId&gt;</span>
             <span class="tok-nt">&lt;artifactId&gt;</span>junit-jupiter-api<span class="tok-nt">&lt;/artifactId&gt;</span>
-            <span class="tok-nt">&lt;version&gt;</span>5.3.2<span class="tok-nt">&lt;/version&gt;</span>
+            <span class="tok-nt">&lt;version&gt;</span>5.8.0<span class="tok-nt">&lt;/version&gt;</span>
             <span class="tok-nt">&lt;scope&gt;</span>test<span class="tok-nt">&lt;/scope&gt;</span>
         <span class="tok-nt">&lt;/dependency&gt;</span>
         <span class="tok-nt">&lt;dependency&gt;</span>
             <span class="tok-nt">&lt;groupId&gt;</span>org.junit.jupiter<span class="tok-nt">&lt;/groupId&gt;</span>
             <span class="tok-nt">&lt;artifactId&gt;</span>junit-jupiter-engine<span class="tok-nt">&lt;/artifactId&gt;</span>
-            <span class="tok-nt">&lt;version&gt;</span>5.3.2<span class="tok-nt">&lt;/version&gt;</span>
+            <span class="tok-nt">&lt;version&gt;</span>5.8.0<span class="tok-nt">&lt;/version&gt;</span>
             <span class="tok-nt">&lt;scope&gt;</span>test<span class="tok-nt">&lt;/scope&gt;</span>
         <span class="tok-nt">&lt;/dependency&gt;</span>
         <span class="tok-nt">&lt;dependency&gt;</span>
             <span class="tok-nt">&lt;groupId&gt;</span>org.mockito<span class="tok-nt">&lt;/groupId&gt;</span>
             <span class="tok-nt">&lt;artifactId&gt;</span>mockito-core<span class="tok-nt">&lt;/artifactId&gt;</span>
-            <span class="tok-nt">&lt;version&gt;</span>2.23.4<span class="tok-nt">&lt;/version&gt;</span>
+            <span class="tok-nt">&lt;version&gt;</span>3.12.4<span class="tok-nt">&lt;/version&gt;</span>
             <span class="tok-nt">&lt;scope&gt;</span>test<span class="tok-nt">&lt;/scope&gt;</span>
         <span class="tok-nt">&lt;/dependency&gt;</span>
 
@@ -742,7 +757,7 @@ $ mkdir -p src/<span class="tok-o">{</span>main,test<span class="tok-o">}</span>
             <span class="tok-nt">&lt;plugins&gt;</span>
                 <span class="tok-nt">&lt;plugin&gt;</span>
                     <span class="tok-nt">&lt;artifactId&gt;</span>maven-surefire-plugin<span class="tok-nt">&lt;/artifactId&gt;</span>
-                    <span class="tok-nt">&lt;version&gt;</span>2.22.1<span class="tok-nt">&lt;/version&gt;</span>
+                    <span class="tok-nt">&lt;version&gt;</span>2.22.2<span class="tok-nt">&lt;/version&gt;</span>
                 <span class="tok-nt">&lt;/plugin&gt;</span>
             <span class="tok-nt">&lt;/plugins&gt;</span>
         <span class="tok-nt">&lt;/pluginManagement&gt;</span>
@@ -821,7 +836,7 @@ packages Java qui vont matérialiser notre architecture applicative.</p>
 <div class="paragraph">
 <p>On peut bien sûr utiliser les noms de package que l&#8217;on souhaite.
 Cette structure est une structure que l&#8217;on retrouve très souvent sur les projets
-d&#8217;entreprise</p>
+d&#8217;entreprise.</p>
 </div>
 </td>
 </tr>
@@ -933,64 +948,11 @@ d&#8217;entreprise</p>
 <div class="sect2">
 <h3 id="_les_classes_java"><a class="anchor" href="#_les_classes_java"></a><a class="link" href="#_les_classes_java">4.2. Les classes Java</a></h3>
 <div class="paragraph">
-<p>Nous allons donc créer une classe Java qui reprend cette structure, mais en ne conservant que les champs
+<p>Nous allons donc créer un record Java qui reprend cette structure, mais en ne conservant que les champs
 qui nous intéressent.</p>
 </div>
 <div class="listingblock">
 <div class="title">com.miage.alom.pokemon_type_api.bo.PokemonType.java</div>
-<div class="content">
-<pre class="pygments highlight nowrap"><code data-lang="java"><table class="linenotable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16</pre></div></td><td class="code"><pre><span></span><span class="tok-kn">package</span> <span class="tok-nn">com.miage.alom.pokemon_type_api.bo</span><span class="tok-o">;</span>
-
-<span class="tok-kd">public</span> <span class="tok-kd">class</span> <span class="tok-nc">PokemonType</span> <span class="tok-o">{</span> <i class="conum" data-value="1"></i><b>(1)</b>
-
-    <span class="tok-kd">private</span> <span class="tok-kt">int</span> <span class="tok-n">id</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-kt">int</span> <span class="tok-n">baseExperience</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-kt">int</span> <span class="tok-n">height</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">String</span> <span class="tok-n">name</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">Sprites</span> <span class="tok-n">sprites</span><span class="tok-o">;</span> <i class="conum" data-value="3"></i><b>(3)</b>
-    <span class="tok-kd">private</span> <span class="tok-n">Stats</span> <span class="tok-n">stats</span><span class="tok-o">;</span> <i class="conum" data-value="3"></i><b>(3)</b>
-    <span class="tok-kd">private</span> <span class="tok-kt">int</span> <span class="tok-n">weight</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">List</span><span class="tok-o">&lt;</span><span class="tok-n">String</span><span class="tok-o">&gt;</span> <span class="tok-n">types</span><span class="tok-o">;</span>
-
-    <i class="conum" data-value="2"></i><b>(2)</b>
-
-<span class="tok-o">}</span>
-</pre></td></tr></table></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>On sélectionne les champs "id", "name", et "sprites"</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>On a besoin des getters et setters par la suite (pour les générer, utilisez <span class="keyseq"><kbd>Alt</kbd>+<kbd>Inser</kbd></span> sous IntelliJ)</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>Pour les objets imbriqués, on utilise d&#8217;autres classes</td>
-</tr>
-</table>
-</div>
-<div class="listingblock">
-<div class="title">com.miage.alom.pokemon_type_api.bo.Sprites.java</div>
 <div class="content">
 <pre class="pygments highlight nowrap"><code data-lang="java"><table class="linenotable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -1001,39 +963,39 @@ qui nous intéressent.</p>
 7
 8</pre></div></td><td class="code"><pre><span></span><span class="tok-kn">package</span> <span class="tok-nn">com.miage.alom.pokemon_type_api.bo</span><span class="tok-o">;</span>
 
-<span class="tok-kd">public</span> <span class="tok-kd">class</span> <span class="tok-nc">Sprites</span> <span class="tok-o">{</span>
-
-    <span class="tok-kd">private</span> <span class="tok-n">String</span> <span class="tok-n">back_default</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">String</span> <span class="tok-n">front_default</span><span class="tok-o">;</span>
-
-<span class="tok-o">}</span>
+<span class="tok-kd">public</span> <span class="tok-n">record</span> <span class="tok-nf">PokemonType</span><span class="tok-o">(</span>
+        <span class="tok-kt">int</span> <span class="tok-n">id</span><span class="tok-o">,</span>
+        <span class="tok-n">String</span> <span class="tok-n">name</span><span class="tok-o">,</span>
+        <span class="tok-n">Sprites</span> <span class="tok-n">sprites</span><span class="tok-o">,</span>
+        <span class="tok-n">List</span><span class="tok-o">&lt;</span><span class="tok-n">String</span><span class="tok-o">&gt;</span> <span class="tok-n">types</span>
+<span class="tok-o">)</span> <span class="tok-o">{}</span>
 </pre></td></tr></table></code></pre>
 </div>
 </div>
 <div class="listingblock">
-<div class="title">com.miage.alom.pokemon_type_api.bo.Stats.java</div>
+<div class="title">com.miage.alom.pokemon_type_api.bo.Sprites.java</div>
 <div class="content">
-<pre class="pygments highlight nowrap"><code data-lang="java"><table class="linenotable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10</pre></div></td><td class="code"><pre><span></span><span class="tok-kn">package</span> <span class="tok-nn">com.miage.alom.pokemon_type_api.bo</span><span class="tok-o">;</span>
+<pre class="pygments highlight nowrap"><code data-lang="java"><table class="linenotable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3</pre></div></td><td class="code"><pre><span></span><span class="tok-kn">package</span> <span class="tok-nn">com.miage.alom.pokemon_type_api.bo</span><span class="tok-o">;</span>
 
-<span class="tok-kd">public</span> <span class="tok-kd">class</span> <span class="tok-nc">Stats</span> <span class="tok-o">{</span>
-
-    <span class="tok-kd">private</span> <span class="tok-n">Integer</span> <span class="tok-n">speed</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">Integer</span> <span class="tok-n">defense</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">Integer</span> <span class="tok-n">attack</span><span class="tok-o">;</span>
-    <span class="tok-kd">private</span> <span class="tok-n">Integer</span> <span class="tok-n">hp</span><span class="tok-o">;</span>
-
-<span class="tok-o">}</span>
+<span class="tok-kd">public</span> <span class="tok-n">record</span> <span class="tok-nf">Sprites</span><span class="tok-o">(</span><span class="tok-n">String</span> <span class="tok-n">back_default</span><span class="tok-o">,</span> <span class="tok-n">String</span> <span class="tok-n">front_default</span><span class="tok-o">)</span> <span class="tok-o">{}</span>
 </pre></td></tr></table></code></pre>
 </div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Pour ceux qui souhaiteraient coder en Java 11, le record doit être convertit en classe, avec les getters/setters</p>
+</div>
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -1079,7 +1041,7 @@ Par exemple, <code>Pikachu</code> est de type <code>electric</code>. Les pokémo
 <span class="tok-nt">&lt;dependency&gt;</span>
     <span class="tok-nt">&lt;groupId&gt;</span>com.fasterxml.jackson.core<span class="tok-nt">&lt;/groupId&gt;</span>
     <span class="tok-nt">&lt;artifactId&gt;</span>jackson-databind<span class="tok-nt">&lt;/artifactId&gt;</span>
-    <span class="tok-nt">&lt;version&gt;</span>2.10.0<span class="tok-nt">&lt;/version&gt;</span>
+    <span class="tok-nt">&lt;version&gt;</span>2.12.5<span class="tok-nt">&lt;/version&gt;</span>
 <span class="tok-nt">&lt;/dependency&gt;</span>
 </pre></td></tr></table></code></pre>
 </div>
@@ -1156,37 +1118,37 @@ Par exemple, <code>Pikachu</code> est de type <code>electric</code>. Les pokémo
     <span class="tok-kt">void</span> <span class="tok-nf">findPokemonTypeById_with25_shouldReturnPikachu</span><span class="tok-o">(){</span>
         <span class="tok-n">var</span> <span class="tok-n">pikachu</span> <span class="tok-o">=</span> <span class="tok-n">repository</span><span class="tok-o">.</span><span class="tok-na">findPokemonTypeById</span><span class="tok-o">(</span><span class="tok-mi">25</span><span class="tok-o">);</span>
         <span class="tok-n">assertNotNull</span><span class="tok-o">(</span><span class="tok-n">pikachu</span><span class="tok-o">);</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;pikachu&quot;</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">getName</span><span class="tok-o">());</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">25</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">getId</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;pikachu&quot;</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">name</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">25</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">id</span><span class="tok-o">());</span>
     <span class="tok-o">}</span>
 
     <span class="tok-nd">@Test</span>
     <span class="tok-kt">void</span> <span class="tok-nf">findPokemonTypeById_with145_shouldReturnZapdos</span><span class="tok-o">(){</span>
         <span class="tok-n">var</span> <span class="tok-n">zapdos</span> <span class="tok-o">=</span> <span class="tok-n">repository</span><span class="tok-o">.</span><span class="tok-na">findPokemonTypeById</span><span class="tok-o">(</span><span class="tok-mi">145</span><span class="tok-o">);</span>
         <span class="tok-n">assertNotNull</span><span class="tok-o">(</span><span class="tok-n">zapdos</span><span class="tok-o">);</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;zapdos&quot;</span><span class="tok-o">,</span> <span class="tok-n">zapdos</span><span class="tok-o">.</span><span class="tok-na">getName</span><span class="tok-o">());</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">145</span><span class="tok-o">,</span> <span class="tok-n">zapdos</span><span class="tok-o">.</span><span class="tok-na">getId</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;zapdos&quot;</span><span class="tok-o">,</span> <span class="tok-n">zapdos</span><span class="tok-o">.</span><span class="tok-na">name</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">145</span><span class="tok-o">,</span> <span class="tok-n">zapdos</span><span class="tok-o">.</span><span class="tok-na">id</span><span class="tok-o">());</span>
     <span class="tok-o">}</span>
 
     <span class="tok-nd">@Test</span>
     <span class="tok-kt">void</span> <span class="tok-nf">findPokemonTypeByName_withEevee_shouldReturnEevee</span><span class="tok-o">(){</span>
         <span class="tok-n">var</span> <span class="tok-n">eevee</span> <span class="tok-o">=</span> <span class="tok-n">repository</span><span class="tok-o">.</span><span class="tok-na">findPokemonTypeByName</span><span class="tok-o">(</span><span class="tok-s">&quot;eevee&quot;</span><span class="tok-o">);</span>
         <span class="tok-n">assertNotNull</span><span class="tok-o">(</span><span class="tok-n">eevee</span><span class="tok-o">);</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;eevee&quot;</span><span class="tok-o">,</span> <span class="tok-n">eevee</span><span class="tok-o">.</span><span class="tok-na">getName</span><span class="tok-o">());</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">133</span><span class="tok-o">,</span> <span class="tok-n">eevee</span><span class="tok-o">.</span><span class="tok-na">getId</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;eevee&quot;</span><span class="tok-o">,</span> <span class="tok-n">eevee</span><span class="tok-o">.</span><span class="tok-na">name</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">133</span><span class="tok-o">,</span> <span class="tok-n">eevee</span><span class="tok-o">.</span><span class="tok-na">id</span><span class="tok-o">());</span>
     <span class="tok-o">}</span>
 
     <span class="tok-nd">@Test</span>
     <span class="tok-kt">void</span> <span class="tok-nf">findPokemonTypeByName_withMewTwo_shouldReturnMewTwo</span><span class="tok-o">(){</span>
         <span class="tok-n">var</span> <span class="tok-n">mewtwo</span> <span class="tok-o">=</span> <span class="tok-n">repository</span><span class="tok-o">.</span><span class="tok-na">findPokemonTypeByName</span><span class="tok-o">(</span><span class="tok-s">&quot;mewtwo&quot;</span><span class="tok-o">);</span>
         <span class="tok-n">assertNotNull</span><span class="tok-o">(</span><span class="tok-n">mewtwo</span><span class="tok-o">);</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;mewtwo&quot;</span><span class="tok-o">,</span> <span class="tok-n">mewtwo</span><span class="tok-o">.</span><span class="tok-na">getName</span><span class="tok-o">());</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">150</span><span class="tok-o">,</span> <span class="tok-n">mewtwo</span><span class="tok-o">.</span><span class="tok-na">getId</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;mewtwo&quot;</span><span class="tok-o">,</span> <span class="tok-n">mewtwo</span><span class="tok-o">.</span><span class="tok-na">name</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">150</span><span class="tok-o">,</span> <span class="tok-n">mewtwo</span><span class="tok-o">.</span><span class="tok-na">id</span><span class="tok-o">());</span>
     <span class="tok-o">}</span>
 
     <span class="tok-nd">@Test</span>
-    <span class="tok-kt">void</span> <span class="tok-nf">findAllPokemonType_shouldReturn151Pokemons</span><span class="tok-o">(){</span>
-        <span class="tok-n">var</span> <span class="tok-n">pokemons</span> <span class="tok-o">=</span> <span class="tok-n">repository</span><span class="tok-o">.</span><span class="tok-na">findAllPokemonType</span><span class="tok-o">();</span>
+    <span class="tok-kt">void</span> <span class="tok-nf">findAllPokemonTypes_shouldReturn151Pokemons</span><span class="tok-o">(){</span>
+        <span class="tok-n">var</span> <span class="tok-n">pokemons</span> <span class="tok-o">=</span> <span class="tok-n">repository</span><span class="tok-o">.</span><span class="tok-na">findAllPokemonTypes</span><span class="tok-o">();</span>
         <span class="tok-n">assertNotNull</span><span class="tok-o">(</span><span class="tok-n">pokemons</span><span class="tok-o">);</span>
         <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">151</span><span class="tok-o">,</span> <span class="tok-n">pokemons</span><span class="tok-o">.</span><span class="tok-na">size</span><span class="tok-o">());</span>
     <span class="tok-o">}</span>
@@ -1211,7 +1173,7 @@ Par exemple, <code>Pikachu</code> est de type <code>electric</code>. Les pokémo
 5</pre></div></td><td class="code"><pre><span></span><span class="tok-kd">public</span> <span class="tok-kd">interface</span> <span class="tok-nc">PokemonTypeRepository</span> <span class="tok-o">{</span>
     <span class="tok-n">PokemonType</span> <span class="tok-nf">findPokemonTypeById</span><span class="tok-o">(</span><span class="tok-kt">int</span> <span class="tok-n">id</span><span class="tok-o">);</span>
     <span class="tok-n">PokemonType</span> <span class="tok-nf">findPokemonTypeByName</span><span class="tok-o">(</span><span class="tok-n">String</span> <span class="tok-n">name</span><span class="tok-o">);</span>
-    <span class="tok-n">List</span><span class="tok-o">&lt;</span><span class="tok-n">PokemonType</span><span class="tok-o">&gt;</span> <span class="tok-nf">findAllPokemonType</span><span class="tok-o">();</span>
+    <span class="tok-n">List</span><span class="tok-o">&lt;</span><span class="tok-n">PokemonType</span><span class="tok-o">&gt;</span> <span class="tok-nf">findAllPokemonTypes</span><span class="tok-o">();</span>
 <span class="tok-o">}</span>
 </pre></td></tr></table></code></pre>
 </div>
@@ -1284,7 +1246,7 @@ Par exemple, <code>Pikachu</code> est de type <code>electric</code>. Les pokémo
     <span class="tok-o">}</span>
 
     <span class="tok-nd">@Override</span>
-    <span class="tok-kd">public</span> <span class="tok-n">List</span><span class="tok-o">&lt;</span><span class="tok-n">PokemonType</span><span class="tok-o">&gt;</span> <span class="tok-nf">findAllPokemonType</span><span class="tok-o">()</span> <span class="tok-o">{</span>
+    <span class="tok-kd">public</span> <span class="tok-n">List</span><span class="tok-o">&lt;</span><span class="tok-n">PokemonType</span><span class="tok-o">&gt;</span> <span class="tok-nf">findAllPokemonTypes</span><span class="tok-o">()</span> <span class="tok-o">{</span>
         <span class="tok-c1">// TODO </span><i class="conum" data-value="3"></i><b>(3)</b>
     <span class="tok-o">}</span>
 <span class="tok-o">}</span>
@@ -1334,7 +1296,7 @@ l&#8217;instancier !</p>
 <span class="tok-nt">&lt;dependency&gt;</span>
     <span class="tok-nt">&lt;groupId&gt;</span>org.springframework<span class="tok-nt">&lt;/groupId&gt;</span>
     <span class="tok-nt">&lt;artifactId&gt;</span>spring-context<span class="tok-nt">&lt;/artifactId&gt;</span>
-    <span class="tok-nt">&lt;version&gt;</span>5.2.0.RELEASE<span class="tok-nt">&lt;/version&gt;</span>
+    <span class="tok-nt">&lt;version&gt;</span>5.3.10<span class="tok-nt">&lt;/version&gt;</span>
 <span class="tok-nt">&lt;/dependency&gt;</span>
 </pre></td></tr></table></code></pre>
 </div>
@@ -1490,7 +1452,7 @@ un service qui consomme notre repository !</p>
 
         <span class="tok-n">pokemonTypeService</span><span class="tok-o">.</span><span class="tok-na">getAllPokemonTypes</span><span class="tok-o">();</span>
 
-        <span class="tok-n">verify</span><span class="tok-o">(</span><span class="tok-n">pokemonTypeRepository</span><span class="tok-o">).</span><span class="tok-na">findAllPokemonType</span><span class="tok-o">();</span>
+        <span class="tok-n">verify</span><span class="tok-o">(</span><span class="tok-n">pokemonTypeRepository</span><span class="tok-o">).</span><span class="tok-na">findAllPokemonTypes</span><span class="tok-o">();</span>
     <span class="tok-o">}</span>
 
 <span class="tok-o">}</span>
@@ -1725,7 +1687,7 @@ que nous avons écrit la semaine dernière&#8230;&#8203;</p>
 5</pre></div></td><td class="code"><pre><span></span><span class="tok-nt">&lt;parent&gt;</span>
     <span class="tok-nt">&lt;groupId&gt;</span>org.springframework.boot<span class="tok-nt">&lt;/groupId&gt;</span>
     <span class="tok-nt">&lt;artifactId&gt;</span>spring-boot-starter-parent<span class="tok-nt">&lt;/artifactId&gt;</span> <i class="conum" data-value="1"></i><b>(1)</b>
-    <span class="tok-nt">&lt;version&gt;</span>2.2.0.RELEASE<span class="tok-nt">&lt;/version&gt;</span>
+    <span class="tok-nt">&lt;version&gt;</span>2.3.8<span class="tok-nt">&lt;/version&gt;</span>
 <span class="tok-nt">&lt;/parent&gt;</span>
 </pre></td></tr></table></code></pre>
 </div>
@@ -2022,7 +1984,7 @@ mais nous allons utiliser toute la puissance de Spring.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://docs.spring.io/spring/docs/5.2.0.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping">@RequestMapping</a></p>
+<p><a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#mvc-ann-requestmapping">@RequestMapping</a></p>
 </li>
 </ul>
 </div>
@@ -2082,7 +2044,7 @@ Implémentez la classe suivante :</p>
  =========|_|==============|___/=/_/_/_/
  :: Spring Boot ::        (v2.1.2.RELEASE)
 
-[..] [main] c.m.a.tp.pokemon_type_api.Application    : Starting Application on jwittouck-N14xWU with PID 12414 (/home/jwittouck/workspaces/alom/alom-2020-2021/tp/pokemon-type-api/target/classes started by jwittouck in /home/jwittouck/workspaces/alom/alom-2020-2021)
+[..] [main] c.m.a.tp.pokemon_type_api.Application    : Starting Application on jwittouck-N14xWU with PID 12414 (/home/jwittouck/workspaces/alom/alom-2020-2021/tp/pokemon-type-api/target/classes started by jwittouck in /home/jwittouck/workspaces/alom/alom-2021-2022)
 [..] [main] c.m.a.tp.pokemon_type_api.Application    : No active profile set, falling back to default profiles: default
 [..]  INFO 12414 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
 [..] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat] <i class="conum" data-value="2"></i><b>(2)</b>
@@ -2267,8 +2229,7 @@ Ce genre de test, qui démarre une base de données ou un serveur par exemple, e
 36
 37
 38
-39
-40</pre></div></td><td class="code"><pre><span></span><span class="tok-kn">package</span> <span class="tok-nn">com.miage.alom.tp.pokemon_type_api.controller</span><span class="tok-o">;</span>
+39</pre></div></td><td class="code"><pre><span></span><span class="tok-kn">package</span> <span class="tok-nn">com.miage.alom.tp.pokemon_type_api.controller</span><span class="tok-o">;</span>
 
 <span class="tok-kn">import</span> <span class="tok-nn">com.miage.alom.tp.pokemon_type_api.bo.PokemonType</span><span class="tok-o">;</span>
 <span class="tok-kn">import</span> <span class="tok-nn">org.junit.jupiter.api.Test</span><span class="tok-o">;</span>
@@ -2303,9 +2264,8 @@ Ce genre de test, qui démarre une base de données ou un serveur par exemple, e
         <span class="tok-n">var</span> <span class="tok-n">pikachu</span> <span class="tok-o">=</span> <span class="tok-k">this</span><span class="tok-o">.</span><span class="tok-na">restTemplate</span><span class="tok-o">.</span><span class="tok-na">getForObject</span><span class="tok-o">(</span><span class="tok-n">url</span><span class="tok-o">,</span> <span class="tok-n">PokemonType</span><span class="tok-o">.</span><span class="tok-na">class</span><span class="tok-o">);</span> <i class="conum" data-value="6"></i><b>(6)</b>
 
         <span class="tok-n">assertNotNull</span><span class="tok-o">(</span><span class="tok-n">pikachu</span><span class="tok-o">);</span> <i class="conum" data-value="7"></i><b>(7)</b>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">25</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">getId</span><span class="tok-o">());</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;pikachu&quot;</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">getName</span><span class="tok-o">());</span>
-        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">4</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">getHeight</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-mi">25</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">id</span><span class="tok-o">());</span>
+        <span class="tok-n">assertEquals</span><span class="tok-o">(</span><span class="tok-s">&quot;pikachu&quot;</span><span class="tok-o">,</span> <span class="tok-n">pikachu</span><span class="tok-o">.</span><span class="tok-na">name</span><span class="tok-o">());</span>
     <span class="tok-o">}</span>
 <span class="tok-o">}</span>
 </pre></td></tr></table></code></pre>
@@ -2500,10 +2460,10 @@ La contruction de <em>jar</em> "autoporté" spring-boot, est aujourd&#8217;hui l
 Cependant, nous pouvons développer des routes supportant des paramètres supplémentaires pour être capable de recherche plus finement un pokémon !</p>
 </div>
 <div class="paragraph">
-<p>Par défaut, la liste des pokémons pourrait également être triée par id.</p>
+<p>Par défaut, la liste des pokémons doit également être triée par id.</p>
 </div>
 <div class="paragraph">
-<p>Il serait intéressant de développer les routes suivantes pour notre jeu :</p>
+<p>Développez les routes suivantes pour notre jeu :</p>
 </div>
 <div class="ulist">
 <ul>
@@ -2520,7 +2480,7 @@ Cependant, nous pouvons développer des routes supportant des paramètres suppl�
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-09-18 14:56:37 +0200
+Last updated 2021-09-21 19:35:18 +0200
 </div>
 </div>
 <style>

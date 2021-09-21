@@ -56,9 +56,15 @@ Nous repartons de zéro pour ce TP !
 Nous allons réécrire le TP "Handcrafting" en utilisant Spring !
 ====
 
+[NOTE]
+====
+Le code de ce TP est en Java 17 !
+Mettez à jour votre JDK (ou faites de simples classes à la place des `record`)
+====
+
 == Github
 
-Identifiez vous sur Github, et cliquez sur le lien suivant pour créer votre repository git: https://classroom.github.com/a/muEZu82F[Github classroom,window="_blank"]
+Identifiez vous sur Github, et cliquez sur le lien suivant pour créer votre repository git: https://classroom.github.com/a/_tVnnj4M[Github classroom,window="_blank"]
 
 Clonez ensuite votre repository git sur votre poste !
 
@@ -93,8 +99,8 @@ Initialiser un fichier pom.xml à la racine du projet
     <packaging>jar</packaging> <!--1-->
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source> <!--2-->
-        <maven.compiler.target>11</maven.compiler.target> <!--3-->
+        <maven.compiler.source>17</maven.compiler.source> <!--2-->
+        <maven.compiler.target>17</maven.compiler.target> <!--3-->
     </properties>
 
     <dependencies>
@@ -103,19 +109,19 @@ Initialiser un fichier pom.xml à la racine du projet
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.3.2</version>
+            <version>5.8.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.3.2</version>
+            <version>5.8.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.23.4</version>
+            <version>3.12.4</version>
             <scope>test</scope>
         </dependency>
 
@@ -126,7 +132,7 @@ Initialiser un fichier pom.xml à la racine du projet
             <plugins>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.1</version>
+                    <version>2.22.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -160,7 +166,7 @@ Notre projet est prêt !
 ====
 On peut bien sûr utiliser les noms de package que l'on souhaite.
 Cette structure est une structure que l'on retrouve très souvent sur les projets
-d'entreprise
+d'entreprise.
 ====
 
 == La classe PokemonType
@@ -260,7 +266,7 @@ Par exemple, voici ce qu'on obtient en appelant l'API (un peu simplifié):
 
 === Les classes Java
 
-Nous allons donc créer une classe Java qui reprend cette structure, mais en ne conservant que les champs
+Nous allons donc créer un record Java qui reprend cette structure, mais en ne conservant que les champs
 qui nous intéressent.
 
 .com.miage.alom.pokemon_type_api.bo.PokemonType.java
@@ -268,52 +274,26 @@ qui nous intéressent.
 ----
 package com.miage.alom.pokemon_type_api.bo;
 
-public class PokemonType { //<1>
-
-    private int id;
-    private int baseExperience;
-    private int height;
-    private String name;
-    private Sprites sprites; //<3>
-    private Stats stats; //<3>
-    private int weight;
-    private List<String> types;
-
-    //<2>
-
-}
+public record PokemonType(
+        int id,
+        String name,
+        Sprites sprites,
+        List<String> types
+) {}
 ----
-<1> On sélectionne les champs "id", "name", et "sprites"
-<2> On a besoin des getters et setters par la suite (pour les générer, utilisez kbd:[Alt+Inser] sous IntelliJ)
-<3> Pour les objets imbriqués, on utilise d'autres classes
 
 .com.miage.alom.pokemon_type_api.bo.Sprites.java
 [source,java,linenums]
 ----
 package com.miage.alom.pokemon_type_api.bo;
 
-public class Sprites {
-
-    private String back_default;
-    private String front_default;
-
-}
+public record Sprites(String back_default, String front_default) {}
 ----
 
-.com.miage.alom.pokemon_type_api.bo.Stats.java
-[source,java,linenums]
-----
-package com.miage.alom.pokemon_type_api.bo;
-
-public class Stats {
-
-    private Integer speed;
-    private Integer defense;
-    private Integer attack;
-    private Integer hp;
-
-}
-----
+[NOTE]
+====
+Pour ceux qui souhaiteraient coder en Java 11, le record doit être convertit en classe, avec les getters/setters
+====
 
 == Le repository
 
@@ -338,7 +318,7 @@ Ajoutez la dépendance suivante dans votre `pom.xml`
 <dependency>
     <groupId>com.fasterxml.jackson.core</groupId>
     <artifactId>jackson-databind</artifactId>
-    <version>2.10.0</version>
+    <version>2.12.5</version>
 </dependency>
 ----
 
@@ -363,37 +343,37 @@ class PokemonTypeRepositoryImplTest {
     void findPokemonTypeById_with25_shouldReturnPikachu(){
         var pikachu = repository.findPokemonTypeById(25);
         assertNotNull(pikachu);
-        assertEquals("pikachu", pikachu.getName());
-        assertEquals(25, pikachu.getId());
+        assertEquals("pikachu", pikachu.name());
+        assertEquals(25, pikachu.id());
     }
 
     @Test
     void findPokemonTypeById_with145_shouldReturnZapdos(){
         var zapdos = repository.findPokemonTypeById(145);
         assertNotNull(zapdos);
-        assertEquals("zapdos", zapdos.getName());
-        assertEquals(145, zapdos.getId());
+        assertEquals("zapdos", zapdos.name());
+        assertEquals(145, zapdos.id());
     }
 
     @Test
     void findPokemonTypeByName_withEevee_shouldReturnEevee(){
         var eevee = repository.findPokemonTypeByName("eevee");
         assertNotNull(eevee);
-        assertEquals("eevee", eevee.getName());
-        assertEquals(133, eevee.getId());
+        assertEquals("eevee", eevee.name());
+        assertEquals(133, eevee.id());
     }
 
     @Test
     void findPokemonTypeByName_withMewTwo_shouldReturnMewTwo(){
         var mewtwo = repository.findPokemonTypeByName("mewtwo");
         assertNotNull(mewtwo);
-        assertEquals("mewtwo", mewtwo.getName());
-        assertEquals(150, mewtwo.getId());
+        assertEquals("mewtwo", mewtwo.name());
+        assertEquals(150, mewtwo.id());
     }
 
     @Test
-    void findAllPokemonType_shouldReturn151Pokemons(){
-        var pokemons = repository.findAllPokemonType();
+    void findAllPokemonTypes_shouldReturn151Pokemons(){
+        var pokemons = repository.findAllPokemonTypes();
         assertNotNull(pokemons);
         assertEquals(151, pokemons.size());
     }
@@ -411,7 +391,7 @@ Ajouter l'interface du PokemonTypeRepository et son implémentation
 public interface PokemonTypeRepository {
     PokemonType findPokemonTypeById(int id);
     PokemonType findPokemonTypeByName(String name);
-    List<PokemonType> findAllPokemonType();
+    List<PokemonType> findAllPokemonTypes();
 }
 ----
 
@@ -449,7 +429,7 @@ public class PokemonTypeRepositoryImpl implements PokemonTypeRepository {
     }
 
     @Override
-    public List<PokemonType> findAllPokemonType() {
+    public List<PokemonType> findAllPokemonTypes() {
         // TODO <3>
     }
 }
@@ -474,7 +454,7 @@ Modifiez votre `pom.xml` pour ajouter la dépendance à Spring :
 <dependency>
     <groupId>org.springframework</groupId>
     <artifactId>spring-context</artifactId>
-    <version>5.2.0.RELEASE</version>
+    <version>5.3.10</version>
 </dependency>
 ----
 
@@ -554,7 +534,7 @@ class PokemonTypeServiceImplTest {
 
         pokemonTypeService.getAllPokemonTypes();
 
-        verify(pokemonTypeRepository).findAllPokemonType();
+        verify(pokemonTypeRepository).findAllPokemonTypes();
     }
 
 }
@@ -672,7 +652,7 @@ Ajoutez le bloc suivant (au dessus du bloc `<dependencies>` :
 <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId> <!--1-->
-    <version>2.2.0.RELEASE</version>
+    <version>2.3.8</version>
 </parent>
 ----
 <1> On importe le pom.xml parent de spring-boot. Cet _héritage_ nous permet de bénéficier
@@ -827,7 +807,7 @@ Posez les bonnes annotations spring pour instrumenter votre Controller et faire 
 ====
 Pour vous aider, voici des liens vers la documentation de spring-web :
 
-* https://docs.spring.io/spring/docs/5.2.0.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping[@RequestMapping]
+* https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#mvc-ann-requestmapping[@RequestMapping]
 ====
 
 === L'exécution de notre projet !
@@ -862,7 +842,7 @@ Démarrez le main, et observez les logs :
  =========|_|==============|___/=/_/_/_/
  :: Spring Boot ::        (v2.1.2.RELEASE)
 
-[..] [main] c.m.a.tp.pokemon_type_api.Application    : Starting Application on jwittouck-N14xWU with PID 12414 (/home/jwittouck/workspaces/alom/alom-2020-2021/tp/pokemon-type-api/target/classes started by jwittouck in /home/jwittouck/workspaces/alom/alom-2020-2021)
+[..] [main] c.m.a.tp.pokemon_type_api.Application    : Starting Application on jwittouck-N14xWU with PID 12414 (/home/jwittouck/workspaces/alom/alom-2020-2021/tp/pokemon-type-api/target/classes started by jwittouck in /home/jwittouck/workspaces/alom/alom-2021-2022)
 [..] [main] c.m.a.tp.pokemon_type_api.Application    : No active profile set, falling back to default profiles: default
 [..]  INFO 12414 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
 [..] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat] <2>
@@ -976,9 +956,8 @@ class PokemonTypeControllerIntegrationTest {
         var pikachu = this.restTemplate.getForObject(url, PokemonType.class); //<6>
 
         assertNotNull(pikachu); //<7>
-        assertEquals(25, pikachu.getId());
-        assertEquals("pikachu", pikachu.getName());
-        assertEquals(4, pikachu.getHeight());
+        assertEquals(25, pikachu.id());
+        assertEquals("pikachu", pikachu.name());
     }
 }
 ----
@@ -1081,9 +1060,9 @@ La contruction de _jar_ "autoporté" spring-boot, est aujourd'hui l'état de l'a
 Les types de pokemons sont des données "référentielles". Cela signifie qu'elles seront le plus souvent accédées en lecture seule.
 Cependant, nous pouvons développer des routes supportant des paramètres supplémentaires pour être capable de recherche plus finement un pokémon !
 
-Par défaut, la liste des pokémons pourrait également être triée par id.
+Par défaut, la liste des pokémons doit également être triée par id.
 
-Il serait intéressant de développer les routes suivantes pour notre jeu :
+Développez les routes suivantes pour notre jeu :
 
 * link:http://localhost:8080/pokemon-types/?types=electric[,window="_blank"] (9 pokémons ont le type électrique)
 * link:http://localhost:8080/pokemon-types/?types=bug,poison[,window="_blank"] (5 pokémons ont les types insecte et poison)
